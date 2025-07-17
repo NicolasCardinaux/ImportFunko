@@ -1,0 +1,102 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const RelatedProducts = ({ productId, category }) => {
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      try {
+        setLoading(true);
+
+        if (!category || typeof category !== "string" || category.trim() === "") {
+          throw new Error("Categoría inválida o no proporcionada");
+        }
+
+        const response = await fetch(
+          `https://practica-django-fxpz.onrender.com/funkos?categoria=${encodeURIComponent(category)}`
+        );
+        if (!response.ok) {
+          throw new Error(`Error al cargar productos relacionados: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("Respuesta de la API para productos relacionados:", data);
+
+        if (data && data.funkos && Array.isArray(data.funkos)) {
+          const filteredProducts = data.funkos
+            .filter((p) => {
+              if (p.idFunko === productId) return false; 
+              if (!p.categoría) return false; 
+              if (Array.isArray(p.categoría)) {
+                return p.categoría.some(
+                  (cat) => (typeof cat === "object" ? cat.nombre : cat) === category
+                );
+              }
+              return p.categoría === category; 
+            })
+            .slice(0, 4); 
+          setRelatedProducts(filteredProducts);
+        } else {
+          throw new Error("Formato de datos inesperado en productos relacionados");
+        }
+      } catch (error) {
+        console.error("Error al cargar productos relacionados:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (category) {
+      fetchRelatedProducts();
+    } else {
+      setLoading(false);
+      setError("No se proporcionó una categoría válida");
+    }
+  }, [productId, category]);
+
+  if (loading) return <div>Cargando productos relacionados...</div>;
+  if (error) return <div className="error-message">Error: {error}</div>;
+  if (relatedProducts.length === 0) return <div>No hay productos relacionados con esta categoría.</div>;
+
+  const handleViewMore = () => {
+    navigate(`/?category=${encodeURIComponent(category)}`);
+  };
+
+  const handleProductClick = (id) => {
+    navigate(`/product/${id}`); 
+  };
+
+  return (
+    <div className="related-products">
+      <h3>Productos relacionados (Categoría: {category})</h3>
+      <div className="related-products-list">
+        {relatedProducts.map((relatedProduct) => (
+          <div
+            key={relatedProduct.idFunko}
+            className="related-product-item"
+            onClick={() => handleProductClick(relatedProduct.idFunko)}
+          >
+            <img
+              src={relatedProduct.imagen?.url || "https://via.placeholder.com/150"}
+              alt={relatedProduct.nombre || "Funko"}
+              className="related-product-image"
+              onError={(e) => (e.target.src = "https://via.placeholder.com/150")}
+            />
+            <h4>{relatedProduct.nombre || "Sin nombre"}</h4>
+            <p>${relatedProduct.precio?.toFixed(2) || "0.00"}</p>
+          </div>
+        ))}
+      </div>
+      <button onClick={handleViewMore} className="view-more-button">
+        Ver más
+      </button>
+    </div>
+  );
+};
+
+export default RelatedProducts;
