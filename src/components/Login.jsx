@@ -7,7 +7,6 @@ import hiddenIcon from "../assets/hidden.png";
 import gitIcon from "../assets/git.png";
 import twitterIcon from "../assets/logo_twitter.webp";
 import googleIcon from "../assets/google.png";
-import funkologin from "../assets/funkologin.png"; // Importar la nueva imagen
 import ThemeToggleButton from "./ThemeToggleButton";
 import { useAuth } from "../context/AuthContext";
 
@@ -229,7 +228,7 @@ const Login = () => {
   const loginWithTwitterCustom = async () => {
     try {
       const response = await fetch("https://practica-django-fxpz.onrender.com/auth/twitter/", {
-        method: "GET", // Changed to GET to match the OAuth flow
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
@@ -263,7 +262,6 @@ const Login = () => {
 
   return (
     <div className="auth-container">
-      <img src={funkologin} alt="Funko Login" className="funko-image" /> {/* Agregar la imagen */}
       <div className="logo-container">
         <a href="/" className="logo-link" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
           <img src={logo} alt="Logo" className="logo" />
