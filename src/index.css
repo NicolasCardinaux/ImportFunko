@@ -5943,6 +5943,62 @@ body.dark-mode input:disabled {
   }
 }
 
+/* Media Query para teléfonos más pequeños */
+@media (max-width: 480px) {
+  .billing-details-container {
+    width: 100%;
+    padding: 10px;
+    margin: 0 auto;
+    border-radius: 6px;
+  }
+
+  .billing-form {
+    gap: 6px;
+  }
+
+  .billing-form input,
+  .billing-form select {
+    padding: 6px;
+    font-size: 0.75rem;
+    border-radius: 5px;
+  }
+
+  .billing-form button {
+    padding: 6px;
+    font-size: 0.75rem;
+    border-radius: 5px;
+  }
+
+  .shipping-options {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .shipping-options h3 {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .shipping-options label {
+    font-size: 0.75rem;
+    margin: 4px 0;
+  }
+
+  .sugerencias {
+    max-height: 100px;
+    padding: 4px;
+  }
+
+  .sugerencias li {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+
+  .error-message {
+    font-size: 0.7rem;
+    margin-top: 6px;
+  }
+}
 
 /* GRACIAS POR LA COMPRA */
 
