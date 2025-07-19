@@ -20,8 +20,7 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import FavoritesPage from "./components/FavoritesPage";
 import AccountPage from "./components/AccountPage";
-import ThankYouComponent from "./components/ThankYouComponent";
-import GitHubCallback from "./components/GitHubCallback"; // 👈 IMPORTANTE
+import ThankYouComponent from "./components/ThankYouComponent"; // Importa el componente
 import { useAuth } from "./context/AuthContext";
 
 function App() {
@@ -47,8 +46,7 @@ function AppContent() {
       location.pathname !== "/login" &&
       location.pathname !== "/register" &&
       location.pathname !== "/quienes-somos" &&
-      !location.pathname.startsWith("/product/") &&
-      !location.pathname.startsWith("/auth/github/callback") // 👈 Permitir callback
+      !location.pathname.startsWith("/product/")
     ) {
       navigate("/", { replace: true });
     } else if (isAuthenticated && location.pathname === "/login") {
@@ -126,8 +124,7 @@ function AppContent() {
             path="/mis-datos"
             element={<AccountPage setIsAuthenticated={setIsAuthenticated} />}
           />
-          <Route path="/thank-you" element={<ThankYouComponent />} />
-          <Route path="/auth/github/callback" element={<GitHubCallback />} /> {/* 👈 NUEVA RUTA */}
+          <Route path="/thank-you" element={<ThankYouComponent />} /> {/* Nueva ruta */}
         </Routes>
       </main>
   

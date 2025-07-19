@@ -311,13 +311,13 @@ const Login = () => {
           <div className="social-login">
             <p>o continúa con</p>
             <div className="social-icons">
-              <a href="#" onClick={(e) => { e.preventDefault(); loginWithGoogle(); }}>
+              <a onClick={(e) => { e.preventDefault(); loginWithGoogle(); }}>
                 <img src={googleIcon} alt="Google" />
               </a>
-              <a href="#" onClick={(e) => { e.preventDefault(); loginWithGitHub(); }}>
+              <a onClick={(e) => { e.preventDefault(); loginWithGitHub(); }}>
                 <img src={gitIcon} alt="GitHub" />
               </a>
-              <a href="#" onClick={(e) => { e.preventDefault(); loginWithTwitterCustom(); }}>
+              <a onClick={(e) => { e.preventDefault(); loginWithTwitterCustom(); }}>
                 <img src={twitterIcon} alt="Twitter" />
               </a>
             </div>
