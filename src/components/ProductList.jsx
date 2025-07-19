@@ -12,9 +12,7 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
   const productsPerPage = 12;
   const location = useLocation();
 
-
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
 
   const alternativeMessages = [
     "Funko para ti",
@@ -29,7 +27,6 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
     "Funko único",
   ];
 
-
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -37,7 +34,6 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
 
   useEffect(() => {
     fetch("https://practica-django-fxpz.onrender.com/funkos")
@@ -54,7 +50,6 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
         console.error("Error al obtener los productos:", error);
       });
   }, []);
-
 
   useEffect(() => {
     fetch("https://practica-django-fxpz.onrender.com/funkodescuentos")
@@ -80,14 +75,17 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
       });
   }, []);
 
-
   useEffect(() => {
+    if (products.length === 0 || funkoDiscounts.length === 0) {
+      // Evita filtrar antes de que lleguen los datos
+      return;
+    }
+
     let filtered = [...products];
 
     const searchParams = new URLSearchParams(location.search);
     const urlCategory = searchParams.get("category");
     console.log("Parámetro de categoría del URL:", urlCategory);
-
     console.log("Filtros recibidos:", filters);
 
     const categoryToFilter = urlCategory || filters.category;
@@ -130,15 +128,23 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
     setFilteredProducts(filtered);
     setFilteredCount(filtered.length);
     setCurrentPage(1);
-  }, [filters, products, searchTerm, funkoDiscounts, location.search, setFilteredCount]);
+  }, [
+    filters,
+    products,
+    searchTerm,
+    funkoDiscounts,
+    location.search,
+    setFilteredCount,
+  ]);
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   useEffect(() => {
+    if (filteredProducts.length === 0) return; // Asegura que hay datos
     setCurrentCount(currentProducts.length);
-  }, [currentProducts, setCurrentCount]);
+  }, [currentProducts, filteredProducts, setCurrentCount]);
 
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -148,10 +154,9 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
   const getPageNumbers = () => {
-    const maxPageButtons = isMobile ? 2 : 3; 
+    const maxPageButtons = isMobile ? 2 : 3;
     let startPage = Math.max(1, currentPage - 1);
     let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
-
 
     if (endPage - startPage < maxPageButtons - 1) {
       startPage = Math.max(1, endPage - maxPageButtons + 1);
