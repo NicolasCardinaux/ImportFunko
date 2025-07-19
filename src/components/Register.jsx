@@ -219,24 +219,35 @@ const Register = () => {
     }
   };
 
-  const sendTwitterToken = async (oauthToken, oauthVerifier) => {
+  const handleGitHubCallback = async (code) => {
     try {
-      const response = await fetch("https://practica-django-fxpz.onrender.com/auth/twitter/callback", {
+      const response = await fetch("https://practica-django-fxpz.onrender.com/auth/github/callback/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
+        body: JSON.stringify({ code }),
       });
       const data = await response.json();
+      console.log("Respuesta completa de GitHub register:", data);
       if (data.success) {
-        alert("Inicio de sesión exitoso con Twitter.");
-        localStorage.setItem("token", data.token);
-        navigate("/");
+        let userId;
+        if (data.idUsuario) {
+          userId = data.idUsuario;
+        } else if (data.usuario && data.usuario.idUsuario) {
+          userId = data.usuario.idUsuario;
+        } else {
+          throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
+        }
+        alert("Registro exitoso con GitHub.");
+        const userData = { token: data.token, userId };
+        localStorage.setItem("token", userData.token);
+        localStorage.setItem("userId", userData.userId);
+        navigate("/login");
       } else {
-        alert("Error en la autenticación: " + (data.error || "Error desconocido"));
+        alert("Error al registrarse con GitHub: " + (data.error || "Error desconocido"));
       }
     } catch (error) {
-      console.error("Error al autenticar con Twitter:", error);
-      alert("Error en la autenticación con Twitter.");
+      console.error("Error al autenticar con GitHub:", error);
+      alert("Error al registrarse con GitHub.");
     }
   };
 
@@ -250,7 +261,6 @@ const Register = () => {
       });
 
       const data = await response.json();
-
       if (data.authorization_url) {
         window.location.href = data.authorization_url;
       } else {
@@ -262,14 +272,50 @@ const Register = () => {
     }
   };
 
+  const sendTwitterToken = async (oauthToken, oauthVerifier) => {
+    try {
+      const response = await fetch("https://practica-django-fxpz.onrender.com/auth/twitter/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
+      });
+      const data = await response.json();
+      console.log("Respuesta completa de Twitter register:", data);
+      if (data.success) {
+        let userId;
+        if (data.idUsuario) {
+          userId = data.idUsuario;
+        } else if (data.usuario && data.usuario.idUsuario) {
+          userId = data.usuario.idUsuario;
+        } else {
+          throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
+        }
+        alert("Registro exitoso con Twitter.");
+        const userData = { token: data.token, userId };
+        localStorage.setItem("token", userData.token);
+        localStorage.setItem("userId", userData.userId);
+        navigate("/login");
+      } else {
+        alert("Error en la autenticación: " + (data.error || "Error desconocido"));
+      }
+    } catch (error) {
+      console.error("Error al autenticar con Twitter:", error);
+      alert("Error al registrarse con Twitter.");
+    }
+  };
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const oauthToken = urlParams.get("oauth_token");
     const oauthVerifier = urlParams.get("oauth_verifier");
+    const code = urlParams.get("code");
     const errorIntegridad = urlParams.get("errorIntegridad");
 
     if (oauthToken && oauthVerifier) {
       sendTwitterToken(oauthToken, oauthVerifier);
+    }
+    if (code) {
+      handleGitHubCallback(code);
     }
     if (errorIntegridad) {
       alert("Ya existe una cuenta con estas credenciales.");
@@ -359,13 +405,13 @@ const Register = () => {
           <div className="social-login">
             <p>o continúa con</p>
             <div className="social-icons">
-              <a onClick={(e) => { e.preventDefault(); loginWithGoogle(); }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); loginWithGoogle(); }}>
                 <img src={googleIcon} alt="Google" />
               </a>
-              <a onClick={(e) => { e.preventDefault(); loginWithGitHub(); }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); loginWithGitHub(); }}>
                 <img src={gitIcon} alt="GitHub" />
               </a>
-              <a onClick={(e) => { e.preventDefault(); loginWithTwitterCustom(); }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); loginWithTwitterCustom(); }}>
                 <img src={twitterIcon} alt="Twitter" />
               </a>
             </div>
