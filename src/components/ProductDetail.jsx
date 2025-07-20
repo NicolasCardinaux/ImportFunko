@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Breadcrumb from "./Breadcrumb";
 import RelatedProducts from "./RelatedProducts";
 import Reviews from "./Reviews";
-import ShippingCalculator from "./ShippingCalculator"; 
+import ShippingCalculator from "./ShippingCalculator";
 import '../index.css';
 
 const ProductDetail = () => {
@@ -25,7 +25,18 @@ const ProductDetail = () => {
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
 
- 
+  // Redirección al home si el producto tiene stock 0
+  useEffect(() => {
+    if (product && product.stock === 0) {
+      const timer = setTimeout(() => {
+        navigate("/");
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [product, navigate]);
+
+  // Fetch del producto
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -54,7 +65,7 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
- 
+  // Fetch de relaciones Funko-Descuento
   useEffect(() => {
     const fetchFunkoDiscounts = async () => {
       try {
@@ -76,7 +87,7 @@ const ProductDetail = () => {
     fetchFunkoDiscounts();
   }, []);
 
-  
+  // Fetch de descuentos
   useEffect(() => {
     const fetchDiscounts = async () => {
       try {
@@ -98,7 +109,7 @@ const ProductDetail = () => {
     fetchDiscounts();
   }, []);
 
-  
+  // Calcular precio con descuento
   useEffect(() => {
     if (product && funkoDiscounts.length > 0 && discounts.length > 0) {
       const productId = parseInt(id, 10);
@@ -122,7 +133,7 @@ const ProductDetail = () => {
     }
   }, [product, funkoDiscounts, discounts, id]);
 
-  
+  // Verificar si el producto está en favoritos
   useEffect(() => {
     const checkIfFavorite = async () => {
       if (!token) return;
@@ -158,7 +169,7 @@ const ProductDetail = () => {
     checkIfFavorite();
   }, [id, token]);
 
-  
+  // Fetch de reseñas
   useEffect(() => {
     const fetchReviews = async () => {
       try {
@@ -183,7 +194,7 @@ const ProductDetail = () => {
         if (uniqueReviews.length > 0) {
           const totalStars = uniqueReviews.reduce((sum, review) => sum + (review.estrellas || 0), 0);
           const avg = totalStars / uniqueReviews.length;
-          setAverageRating(Math.round(avg)); 
+          setAverageRating(Math.round(avg));
         } else {
           setAverageRating(0);
         }
@@ -257,7 +268,6 @@ const ProductDetail = () => {
     }
   };
 
-  
   const toggleFavorite = async () => {
     if (!token) {
       alert("Debes iniciar sesión para agregar a favoritos.");
@@ -322,7 +332,7 @@ const ProductDetail = () => {
 
     const fullStars = Math.floor(rating);
     const partialStarPercentage = (rating % 1) * 100;
-const emptyStars = 5 - Math.ceil(rating);
+    const emptyStars = 5 - Math.ceil(rating);
 
     return (
       <div className="product-rating">
@@ -405,7 +415,7 @@ const emptyStars = 5 - Math.ceil(rating);
                 style={{ cursor: "pointer" }}
                 title="Ver reseñas"
               >
-               {renderStars(averageRating, true)}
+                {renderStars(averageRating, true)}
               </div>
             )}
             <p className="retroiluminado">
@@ -414,29 +424,63 @@ const emptyStars = 5 - Math.ceil(rating);
             <hr className="retroiluminado-line" />
             <p className="product-stock">Stock: {product.stock || 0}</p>
             {categoryNames && <p className="product-category">Categoría: {categoryNames}</p>}
-            {/* Integrar el componente ShippingCalculator */}
+            {product.stock === 0 && (
+              <div className="out-of-stock-warning">
+                Este producto no tiene stock. Serás redirigido al inicio en 5 segundos.
+              </div>
+            )}
             <div className="shipping-section-wrapper">
               <ShippingCalculator quantity={quantity} />
-            </div> {/* Cierre correcto del div */}
+            </div>
             <div className="product-quantity-container">
               <div className="product-quantity">
-                <button onClick={() => setQuantity(quantity > 1 ? quantity - 1 : 1)} aria-label="Disminuir cantidad">-</button>
+                <button
+                  onClick={() => setQuantity(quantity > 1 ? quantity - 1 : 1)}
+                  aria-label="Disminuir cantidad"
+                  disabled={product.stock === 0}
+                >
+                  -
+                </button>
                 <input type="text" value={quantity} readOnly aria-label="Cantidad de productos" />
                 <button
                   onClick={() =>
                     setQuantity(quantity < (product.stock || 0) ? quantity + 1 : product.stock || 0)
                   }
                   aria-label="Aumentar cantidad"
+                  disabled={product.stock === 0}
                 >
                   +
                 </button>
               </div>
-              <button className="add-to-cart-button" onClick={handleAddToCart} aria-label="Agregar al carrito">
-                Agregar al carrito
+              <button
+                className="add-to-cart-button"
+                onClick={handleAddToCart}
+                disabled={product.stock === 0}
+                aria-label="Agregar al carrito"
+              >
+                {product.stock === 0 ? "Sin stock" : "Agregar al carrito"}
               </button>
             </div>
-            <div className={`favorite-icon ${isFavorite ? "filled" : ""}`} onClick={toggleFavorite} role="button" tabIndex="0" aria-label={isFavorite ? "Eliminar de favoritos" : "Agregar a favoritos"}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="35" height="35">
+            <div
+              className={`favorite-icon ${isFavorite ? "filled" : ""}`}
+              onClick={product.stock === 0 ? null : toggleFavorite}
+              role="button"
+              tabIndex="0"
+              aria-label={isFavorite ? "Eliminar de favoritos" : "Agregar a favoritos"}
+              style={{
+                cursor: product.stock === 0 ? "not-allowed" : "pointer",
+                opacity: product.stock === 0 ? 0.6 : 1,
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="35"
+                height="35"
+                fill={isFavorite ? "#ff6666" : "none"}
+                stroke={isFavorite ? "none" : "#333333"}
+                strokeWidth="2"
+              >
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
               </svg>
             </div>

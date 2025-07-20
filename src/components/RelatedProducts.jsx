@@ -29,16 +29,16 @@ const RelatedProducts = ({ productId, category }) => {
         if (data && data.funkos && Array.isArray(data.funkos)) {
           const filteredProducts = data.funkos
             .filter((p) => {
-              if (p.idFunko === productId) return false; 
-              if (!p.categoría) return false; 
+              if (p.idFunko === productId) return false;
+              if (!p.categoría) return false;
               if (Array.isArray(p.categoría)) {
                 return p.categoría.some(
                   (cat) => (typeof cat === "object" ? cat.nombre : cat) === category
                 );
               }
-              return p.categoría === category; 
+              return p.categoría === category;
             })
-            .slice(0, 4); 
+            .slice(0, 4);
           setRelatedProducts(filteredProducts);
         } else {
           throw new Error("Formato de datos inesperado en productos relacionados");
@@ -68,29 +68,33 @@ const RelatedProducts = ({ productId, category }) => {
   };
 
   const handleProductClick = (id) => {
-    navigate(`/product/${id}`); 
+    navigate(`/product/${id}`);
   };
 
   return (
     <div className="related-products">
       <h3>Productos relacionados (Categoría: {category})</h3>
       <div className="related-products-list">
-        {relatedProducts.map((relatedProduct) => (
-          <div
-            key={relatedProduct.idFunko}
-            className="related-product-item"
-            onClick={() => handleProductClick(relatedProduct.idFunko)}
-          >
-            <img
-              src={relatedProduct.imagen?.url || "https://via.placeholder.com/150"}
-              alt={relatedProduct.nombre || "Funko"}
-              className="related-product-image"
-              onError={(e) => (e.target.src = "https://via.placeholder.com/150")}
-            />
-            <h4>{relatedProduct.nombre || "Sin nombre"}</h4>
-            <p>${relatedProduct.precio?.toFixed(2) || "0.00"}</p>
-          </div>
-        ))}
+        {relatedProducts.map((relatedProduct) => {
+          const isOutOfStock = relatedProduct.stock === 0;
+
+          return (
+            <div
+              key={relatedProduct.idFunko}
+              className={`related-product-item ${isOutOfStock ? "out-of-stock" : ""}`}
+              onClick={() => !isOutOfStock && handleProductClick(relatedProduct.idFunko)} // Evita clics si está agotado
+            >
+              <img
+                src={relatedProduct.imagen?.url || "https://via.placeholder.com/150"}
+                alt={relatedProduct.nombre || "Funko"}
+                className="related-product-image"
+                onError={(e) => (e.target.src = "https://via.placeholder.com/150")}
+              />
+              <h4>{relatedProduct.nombre || "Sin nombre"}</h4>
+              <p>${relatedProduct.precio?.toFixed(2) || "0.00"}</p>
+            </div>
+          );
+        })}
       </div>
       <button onClick={handleViewMore} className="view-more-button">
         Ver más

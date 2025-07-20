@@ -1257,6 +1257,43 @@ body.dark-mode .pagination .page-btn.active {
   color: #FFFFFF !important;
 }
 
+.product-item.out-of-stock {
+  position: relative;
+  overflow: hidden;
+}
+
+.product-item.out-of-stock::before {
+  content: "AGOTADO";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  background-color: rgba(255, 0, 0, 0.85);
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  padding: 12px 0;
+  width: 200%;
+  text-transform: uppercase;
+  z-index: 10;
+  pointer-events: none;
+}
+
+
+.product-item.out-of-stock::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(23, 23, 23, 0.5);
+  z-index: 5;
+  pointer-events: none;
+}
+
+
 
 /* Productos Mobile */
 @media (max-width: 768px) {
@@ -2369,6 +2406,13 @@ body.dark-mode .product-description {
   box-shadow: 0 2px 4px rgba(255, 0, 0, 0.2);
 }
 
+.out-of-stock-warning {
+  color: red;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+
 /* Reviews */
 .reviews-container {
   margin-top: 30px;
@@ -2769,6 +2813,47 @@ body.dark-mode .view-more-button:hover {
 body.dark-mode .no-related-message {
   color: #EAEAEA;
 }
+
+.related-product-item.out-of-stock {
+  position: relative;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.related-product-item.out-of-stock::before {
+  content: "AGOTADO";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  background-color: rgba(255, 0, 0, 0.85);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px 0;
+  width: 200%;
+  text-transform: uppercase;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.related-product-item.out-of-stock::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(23, 23, 23, 0.5);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.related-product-item {
+  overflow: hidden;
+}
+
 
 @media (max-width: 768px) {
   /* ProductDetail Mobile */

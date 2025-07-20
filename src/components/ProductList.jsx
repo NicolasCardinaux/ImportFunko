@@ -77,7 +77,6 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
 
   useEffect(() => {
     if (products.length === 0 || funkoDiscounts.length === 0) {
-      // Evita filtrar antes de que lleguen los datos
       return;
     }
 
@@ -142,7 +141,7 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   useEffect(() => {
-    if (filteredProducts.length === 0) return; // Asegura que hay datos
+    if (filteredProducts.length === 0) return;
     setCurrentCount(currentProducts.length);
   }, [currentProducts, filteredProducts, setCurrentCount]);
 
@@ -202,7 +201,39 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
             const discountPercentage = getDiscountPercentage(product.idFunko);
             const discountedPrice = getDiscountedPrice(product.idFunko, product.precio);
             const category = product.categoría?.[0]?.nombre || getRandomMessage();
-            return (
+
+            return product.stock === 0 ? (
+              <div
+                key={product.idFunko}
+                className="product-item out-of-stock"
+                style={{ "--index": index }}
+              >
+                {discountPercentage && (
+                  <div
+                    className="discount-badge"
+                    style={{ backgroundImage: `url(${redCircle})` }}
+                  >
+                    -{discountPercentage}%
+                  </div>
+                )}
+                <img
+                  src={product.imagen?.url || "https://via.placeholder.com/150"}
+                  alt={product.nombre}
+                />
+                <h4>{product.nombre}</h4>
+                {category && <p className="description">{category}</p>}
+                <div className="product-item-price-container">
+                  {discountPercentage ? (
+                    <>
+                      <p className="product-item-original-price">${product.precio.toFixed(2)}</p>
+                      <p className="product-item-discounted-price">${discountedPrice}</p>
+                    </>
+                  ) : (
+                    <p>${product.precio.toFixed(2)}</p>
+                  )}
+                </div>
+              </div>
+            ) : (
               <Link
                 to={`/product/${product.idFunko}`}
                 key={product.idFunko}
