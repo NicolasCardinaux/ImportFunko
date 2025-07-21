@@ -76,9 +76,7 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
   }, []);
 
   useEffect(() => {
-    if (products.length === 0 || funkoDiscounts.length === 0) {
-      return;
-    }
+    if (products.length === 0) return;
 
     let filtered = [...products];
 
@@ -89,10 +87,10 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
 
     const categoryToFilter = urlCategory || filters.category;
     if (categoryToFilter) {
-      filtered = filtered.filter(
-        (product) =>
-          product.categoría &&
-          product.categoría.some((cat) => (typeof cat === "object" ? cat.nombre : cat) === categoryToFilter)
+      filtered = filtered.filter((product) =>
+        product.categoría?.some((cat) =>
+          typeof cat === "object" ? cat.nombre === categoryToFilter : cat === categoryToFilter
+        )
       );
     }
 
@@ -191,6 +189,8 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
     return alternativeMessages[randomIndex];
   };
 
+  console.log("Productos a renderizar:", currentProducts);
+
   return (
     <div>
       <div className="product-list">
@@ -200,9 +200,11 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
           currentProducts.map((product, index) => {
             const discountPercentage = getDiscountPercentage(product.idFunko);
             const discountedPrice = getDiscountedPrice(product.idFunko, product.precio);
-            const category = product.categoría?.[0]?.nombre || getRandomMessage();
+            const category = Array.isArray(product.categoría)
+              ? product.categoría[0]?.nombre || getRandomMessage()
+              : getRandomMessage();
 
-            return product.stock === 0 ? (
+            return Number(product.stock) === 0 ? (
               <div
                 key={product.idFunko}
                 className="product-item out-of-stock"
