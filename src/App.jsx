@@ -40,23 +40,9 @@ function AppContent() {
   const navigate = useNavigate();
   const { isAuthenticated, setIsAuthenticated } = useAuth();
 
-  // Nuevo useEffect para la redirección de administradores
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    // Obtener isStaff directamente de localStorage y convertirlo a booleano
-    const isStaff = localStorage.getItem("isStaff") === 'true';
-
-    // Si no hay token o el usuario no es staff, no hacemos nada aquí.
-    // La lógica de autenticación general se encargará de los no autenticados.
-    if (!token || !isStaff) {
-      return;
-    }
-
-    // Si el token existe y el usuario es un administrador, lo redirigimos
-    // Ya no se necesita la llamada fetch a /api/user/ en este punto.
-    window.location.href = "https://importfunko-admin.vercel.app";
-
-  }, [isAuthenticated]); // Dependencia de isAuthenticated para re-validar si cambia el estado de login
+  // HE ELIMINADO EL useEffect QUE REDIRIGÍA A LOS ADMINISTRADORES DESDE AQUÍ.
+  // Esa lógica ahora solo reside en Login.jsx para la redirección inicial
+  // y en App.jsx del panel de administración para la protección de rutas.
 
   // useEffect existente para la redirección de usuarios no autenticados
   useEffect(() => {
