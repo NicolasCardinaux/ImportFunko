@@ -28,7 +28,6 @@ const CheckoutPage = () => {
   const [ciudadInput, setCiudadInput] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
-  const [iva, setIva] = useState(0);
   const [cantidad, setCantidad] = useState(0);
   const [shipping, setShipping] = useState({ domicilio: null, sucursal: null, seleccion: "domicilio" });
   const [error, setError] = useState("");
@@ -186,7 +185,6 @@ const CheckoutPage = () => {
         const cartData = await cartResponse.json();
         if (!cartData.items || cartData.items.length === 0) {
           setSubtotal(0);
-          setIva(0);
           setCantidad(0);
           setError("El carrito está vacío.");
           return;
@@ -234,7 +232,6 @@ const CheckoutPage = () => {
         console.log("[CheckoutPage] Subtotal calculado:", total);
 
         setSubtotal(total);
-        setIva(total * 0.21);
         setCantidad(totalCantidad);
       } catch (err) {
         setError(err.message);
@@ -460,7 +457,7 @@ const CheckoutPage = () => {
   };
 
   const envioSeleccionado = shipping.seleccion === "domicilio" ? shipping.domicilio : shipping.sucursal;
-  const totalFinal = subtotal + iva + (envioSeleccionado || 0);
+  const totalFinal = subtotal + (envioSeleccionado || 0);
 
   return (
     <div className="checkout-page">
@@ -583,7 +580,6 @@ const CheckoutPage = () => {
       <div className="checkout-summary">
         <h3>Resumen de Compra</h3>
         <p>Subtotal: ${subtotal.toFixed(2)}</p>
-        <p>IVA (21%): ${iva.toFixed(2)}</p>
         <p>Envío: ${envioSeleccionado !== null ? envioSeleccionado.toFixed(2) : '0.00'}</p>
         <p className="total-price">Total: ${totalFinal.toFixed(2)}</p>
 
