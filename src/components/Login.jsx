@@ -101,8 +101,8 @@ const Login = () => {
 
         // Redirect based on is_staff status
         if (isStaff) {
-          // If is_staff is true, redirect to the admin panel
-          window.location.href = `https://importfunko-admin.vercel.app?token=${token}`;
+          localStorage.setItem("token", token);
+          window.location.href = "https://importfunko-admin.vercel.app";
         } else {
           // Regular user, navigate to home
           const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
