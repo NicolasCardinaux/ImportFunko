@@ -28,6 +28,7 @@ const CheckoutPage = () => {
   const [ciudadInput, setCiudadInput] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
+  const [iva, setIva] = useState(0);
   const [cantidad, setCantidad] = useState(0);
   const [shipping, setShipping] = useState({ domicilio: null, sucursal: null, seleccion: "domicilio" });
   const [error, setError] = useState("");
@@ -54,16 +55,20 @@ const CheckoutPage = () => {
       setIsMpScriptLoaded(true);
     };
 
+    // Revisar si el script ya existe para no duplicarlo
     if (!document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]')) {
       document.body.appendChild(script);
     } else {
       setIsMpScriptLoaded(true);
     }
     
+    // Opcional: Limpieza al desmontar el componente
     return () => {
       const existingScript = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
       if (existingScript) {
-        // No se remueve para evitar problemas si se navega de vuelta a esta página
+        // En general, es mejor no removerlo si otras partes de la app lo pueden necesitar.
+        // Pero si solo se usa aquí, se podría remover.
+        // document.body.removeChild(existingScript);
       }
     };
   }, []);
@@ -181,6 +186,7 @@ const CheckoutPage = () => {
         const cartData = await cartResponse.json();
         if (!cartData.items || cartData.items.length === 0) {
           setSubtotal(0);
+          setIva(0);
           setCantidad(0);
           setError("El carrito está vacío.");
           return;
@@ -212,6 +218,7 @@ const CheckoutPage = () => {
           };
         });
 
+        // Calcular el total usando quantities de localStorage
         const total = itemsWithDetails.reduce((acc, item) => {
           const price = parseFloat(getDiscountedPrice(item.funko, item.price));
           const quantity = quantities[item.idCarritoItem] || item.cantidad || 1;
@@ -223,7 +230,11 @@ const CheckoutPage = () => {
           return acc + quantity;
         }, 0);
 
+        console.log("[CheckoutPage] Cantidad total calculada:", totalCantidad);
+        console.log("[CheckoutPage] Subtotal calculado:", total);
+
         setSubtotal(total);
+        setIva(total * 0.21);
         setCantidad(totalCantidad);
       } catch (err) {
         setError(err.message);
@@ -332,13 +343,17 @@ const CheckoutPage = () => {
       const { lat, lng } = data.results[0].geometry;
       const distance = calculateDistance(ORIGIN_LAT, ORIGIN_LON, lat, lng);
 
+      // Calcular costo base
       const baseCost = distance * PRICE_PER_KM;
 
+      // Aplicar incremento del 10% por cada producto adicional
       let domicilio = baseCost;
       for (let i = 1; i < cantidad; i++) {
-        domicilio = domicilio * 1.1;
+        domicilio = domicilio * 1.1; // Sumar 10% sobre el valor anterior
       }
-      const sucursal = domicilio * 0.8;
+      const sucursal = domicilio * 0.8; // Sucursal es 80% del costo a domicilio
+
+      console.log("[CheckoutPage] Cálculo de envío - Código postal:", form.codigoPostal, "Cantidad:", cantidad, "Distancia:", distance, "Costo Domicilio:", Math.round(domicilio), "Costo Sucursal:", Math.round(sucursal));
 
       setShipping({ domicilio: Math.round(domicilio), sucursal: Math.round(sucursal), seleccion: "domicilio" });
     } catch (err) {
@@ -363,6 +378,7 @@ const CheckoutPage = () => {
     }
 
     try {
+      // First fetch: Save the address
       const addressResponse = await fetch("https://practica-django-fxpz.onrender.com/crear-direccion", {
         method: "POST",
         headers: {
@@ -385,10 +401,11 @@ const CheckoutPage = () => {
       if (!addressResponse.ok) {
         throw new Error("Error al guardar la dirección.");
       }
-      
+      // Extract address ID from response
       const idireccionData = await addressResponse.json();
       const direccion_id = idireccionData.id_direccion;
 
+      // Second fetch: Create Mercado Pago preference
       const preferenceResponse = await fetch('https://practica-django-fxpz.onrender.com/create-preference-from-cart/', {
         method: 'POST',
         headers: {
@@ -419,6 +436,7 @@ const CheckoutPage = () => {
 
       const preferenceId = data.preference_id;
 
+      // Load the Mercado Pago Wallet widget
       const mp = new window.MercadoPago('APP_USR-61f3d47d-4634-4a02-9185-68f2255e63c2');
       mp.bricks().create("wallet", "wallet_container", {
         initialization: {
@@ -442,7 +460,7 @@ const CheckoutPage = () => {
   };
 
   const envioSeleccionado = shipping.seleccion === "domicilio" ? shipping.domicilio : shipping.sucursal;
-  const totalFinal = subtotal + (envioSeleccionado || 0);
+  const totalFinal = subtotal + iva + (envioSeleccionado || 0);
 
   return (
     <div className="checkout-page">
@@ -478,10 +496,34 @@ const CheckoutPage = () => {
             </ul>
           )}
 
-          <input type="text" name="calle" value={form.calle} onChange={handleChange} placeholder="Calle *" />
-          <input type="text" name="numero" value={form.numero} onChange={handleChange} placeholder="Número *" />
-          <input type="text" name="piso" value={form.piso} onChange={handleChange} placeholder="Piso (opcional)" />
-          <input type="text" name="depto" value={form.depto} onChange={handleChange} placeholder="Departamento (opcional)" />
+          <input
+            type="text"
+            name="calle"
+            value={form.calle}
+            onChange={handleChange}
+            placeholder="Calle *"
+          />
+          <input
+            type="text"
+            name="numero"
+            value={form.numero}
+            onChange={handleChange}
+            placeholder="Número *"
+          />
+          <input
+            type="text"
+            name="piso"
+            value={form.piso}
+            onChange={handleChange}
+            placeholder="Piso (opcional)"
+          />
+          <input
+            type="text"
+            name="depto"
+            value={form.depto}
+            onChange={handleChange}
+            placeholder="Departamento (opcional)"
+          />
           <input
             type="text"
             name="codigoPostal"
@@ -490,8 +532,20 @@ const CheckoutPage = () => {
             placeholder={isLoadingPostalCode ? "Cargando código postal..." : "Código Postal (solo números) *"}
             disabled={isLoadingPostalCode}
           />
-          <input type="text" name="telefono" value={form.telefono} onChange={handleChange} placeholder="Teléfono (solo números) *" />
-          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email *" />
+          <input
+            type="text"
+            name="telefono"
+            value={form.telefono}
+            onChange={handleChange}
+            placeholder="Teléfono (solo números) *"
+          />
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="Email *"
+          />
 
           <button onClick={calcularEnvio} disabled={isCalculating}>
             {isCalculating ? 'Calculando...' : 'Calcular Envío'}
@@ -529,6 +583,7 @@ const CheckoutPage = () => {
       <div className="checkout-summary">
         <h3>Resumen de Compra</h3>
         <p>Subtotal: ${subtotal.toFixed(2)}</p>
+        <p>IVA (21%): ${iva.toFixed(2)}</p>
         <p>Envío: ${envioSeleccionado !== null ? envioSeleccionado.toFixed(2) : '0.00'}</p>
         <p className="total-price">Total: ${totalFinal.toFixed(2)}</p>
 
