@@ -8,36 +8,31 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
-    const isStaffString = localStorage.getItem("isStaff");
     const lastActivity = localStorage.getItem("lastActivity");
 
+   
     if (lastActivity && Date.now() - parseInt(lastActivity, 10) > FIVE_DAYS_MS) {
       localStorage.clear();
       return null;
     }
 
-    const isStaff = isStaffString === "true";
-
-    return token && userId
-      ? { token, userId, isStaff: isStaff || false }
-      : null;
+    return token && userId ? { token, userId } : null;
   });
 
   useEffect(() => {
     if (user) {
       localStorage.setItem("token", user.token);
       localStorage.setItem("userId", user.userId);
-      localStorage.setItem("isStaff", String(user.isStaff ?? false)); // ✅ Manejo seguro
       localStorage.setItem("sessionStarted", "true");
-      localStorage.setItem("lastActivity", Date.now().toString());
+      localStorage.setItem("lastActivity", Date.now().toString()); 
     } else {
       localStorage.removeItem("token");
       localStorage.removeItem("userId");
-      localStorage.removeItem("isStaff");
       localStorage.removeItem("sessionStarted");
       localStorage.removeItem("lastActivity");
     }
   }, [user]);
+
 
   useEffect(() => {
     const updateLastActivity = () => {
@@ -59,15 +54,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData) => {
     const sessionStarted = localStorage.getItem("sessionStarted");
-    if (sessionStarted) return;
-
-    const userToSave = {
-      token: userData.token,
-      userId: userData.userId,
-      isStaff: !!userData.isStaff // ✅ Garantiza valor booleano
-    };
-
-    setUser(userToSave);
+    if (sessionStarted) return; 
+    setUser(userData);
   };
 
   const logout = () => {

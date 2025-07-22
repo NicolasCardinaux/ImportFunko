@@ -38,37 +38,21 @@ function AppContent() {
   const [currentCount, setCurrentCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth(); // Obtener el objeto 'user' del contexto
+  const { isAuthenticated, setIsAuthenticated } = useAuth();
 
-  // useEffect para manejar la redirección de usuarios autenticados,
-  // incluyendo la redirección específica para administradores.
   useEffect(() => {
-    // Si el usuario está autenticado y está en la página de login
-    if (isAuthenticated && location.pathname === "/login") {
-      // Verificar si el usuario es administrador
-      const isStaff = user && user.isStaff; // Acceder a isStaff desde el objeto user del contexto
-
-      if (isStaff) {
-        console.log("App.jsx: Usuario admin logueado, redirigiendo a panel de administración.");
-        window.location.href = "https://importfunko-admin.vercel.app";
-      } else {
-        console.log("App.jsx: Usuario común logueado en /login, redirigiendo a /.");
-        navigate("/", { replace: true });
-      }
-    }
-    // Si el usuario NO está autenticado y está intentando acceder a rutas protegidas
-    else if (
+    if (
       !isAuthenticated &&
       location.pathname !== "/login" &&
       location.pathname !== "/register" &&
       location.pathname !== "/quienes-somos" &&
-      !location.pathname.startsWith("/product/") &&
-      location.pathname !== "/thank-you"
+      !location.pathname.startsWith("/product/")
     ) {
-      console.log("App.jsx: Usuario no autenticado en ruta protegida, redirigiendo a /.");
+      navigate("/", { replace: true });
+    } else if (isAuthenticated && location.pathname === "/login") {
       navigate("/", { replace: true });
     }
-  }, [isAuthenticated, location.pathname, navigate, user]); // Dependencias: isAuthenticated, location.pathname, navigate, y user
+  }, [isAuthenticated, location.pathname, navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -99,10 +83,9 @@ function AppContent() {
         location.pathname === "/mis-datos" ||
         location.pathname === "/favoritos" ||
         location.pathname === "/cart" ||
-        location.pathname === "/my-purchases" ||
-        location.pathname === "/thank-you") &&
+        location.pathname === "/my-purchases") &&
         !isAuthPage && <Banner />}
-
+  
       <main className="app-main">
         <Routes>
           <Route
@@ -137,41 +120,14 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/favoritos" element={<FavoritesPage />} />
-          <Route path="/mis-datos" element={<AccountPage />} />
-
-          <Route path="/thank-you" element={<ThankYouComponent />} />
-          <Route path="*" element={
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              minHeight: '80vh',
-              fontSize: '24px',
-              color: '#e74c3c'
-            }}>
-              <h2>Página No Encontrada</h2>
-              <p>Lo sentimos, la página que buscas no existe.</p>
-              <button
-                onClick={() => navigate("/")}
-                style={{
-                  padding: '10px 20px',
-                  marginTop: '20px',
-                  backgroundColor: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontSize: '18px'
-                }}
-              >
-                Volver al Inicio
-              </button>
-            </div>
-          } />
+          <Route
+            path="/mis-datos"
+            element={<AccountPage setIsAuthenticated={setIsAuthenticated} />}
+          />
+          <Route path="/thank-you" element={<ThankYouComponent />} /> {/* Nueva ruta */}
         </Routes>
       </main>
-
+  
       {!isAuthPage && <Footer />}
     </div>
   );
