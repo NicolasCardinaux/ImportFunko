@@ -76,32 +76,52 @@ const Login = () => {
       if (response.ok) {
         const data = await response.json();
         console.log("Respuesta completa del servidor:", data);
-        let userId;
-        if (data.idUsuario) {
-          userId = data.idUsuario;
-        } else if (data.Usuario && data.Usuario.idUsuario) {
-          userId = data.Usuario.idUsuario;
-        } else {
+
+        // Extract token and user data
+        const token = data.Token || data.token;
+        const user = data.Usuario || data.user; // Assuming user data might be under 'Usuario' or 'user'
+
+        if (!token) {
+          throw new Error("No se recibió un token de la respuesta.");
+        }
+        if (!user || !user.idUsuario) {
           throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
         }
-        alert("Inicio de sesión exitoso.");
-        const userData = { token: data.Token || data.token, userId };
-        localStorage.setItem("token", userData.token);
-        localStorage.setItem("userId", userData.userId);
-        login(userData);
+
+        const userId = user.idUsuario;
+        const isStaff = user.is_staff; // Get the is_staff flag
+
+        // Store token and userId in localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem("userId", userId);
+        login({ token, userId }); // Update AuthContext
+
         console.log("Token almacenado en localStorage:", localStorage.getItem("token"));
         console.log("ID de usuario almacenado en localStorage:", localStorage.getItem("userId"));
-        const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
-        sessionStorage.removeItem("redirectAfterLogin");
-        navigate(redirectPath);
+
+        // Redirect based on is_staff status
+        if (isStaff) {
+          // If is_staff is true, redirect to the admin panel
+          window.location.href = `https://importfunko-admin.vercel.app?token=${token}`;
+        } else {
+          // Regular user, navigate to home
+          const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
+          sessionStorage.removeItem("redirectAfterLogin");
+          navigate(redirectPath);
+        }
+        // Removed alert("Inicio de sesión exitoso.") as it might interfere with immediate redirection.
       } else {
         const errorData = await response.json();
         console.log("Respuesta de error del servidor:", errorData);
-        throw new Error(errorData.detail || "Credenciales incorrectas.");
+        // Use a custom message box or a state variable for errors instead of alert
+        // alert(errorData.detail || "Credenciales incorrectas.");
+        console.error(errorData.detail || "Credenciales incorrectas.");
       }
     } catch (error) {
       console.error("Error en el login:", error);
-      alert(error.message || "Usuario o contraseña incorrecta.");
+      // Use a custom message box or a state variable for errors instead of alert
+      // alert(error.message || "Usuario o contraseña incorrecta.");
+      console.error(error.message || "Usuario o contraseña incorrecta.");
     }
   };
 
@@ -126,7 +146,7 @@ const Login = () => {
             console.error("Estructura de respuesta inesperada:", data);
             throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
           }
-          alert("Inicio de sesión exitoso con Google.");
+          // Removed alert("Inicio de sesión exitoso con Google.")
           const userData = { token: data.token, userId };
           localStorage.setItem("token", userData.token);
           localStorage.setItem("userId", userData.userId);
@@ -137,12 +157,14 @@ const Login = () => {
           sessionStorage.removeItem("redirectAfterLogin");
           navigate(redirectPath);
         } else {
-          alert("Error al iniciar sesión con Google: " + (data.error || "Error desconocido"));
+          // alert("Error al iniciar sesión con Google: " + (data.error || "Error desconocido"));
+          console.error("Error al iniciar sesión con Google: " + (data.error || "Error desconocido"));
         }
       })
       .catch((error) => {
         console.error("Error en el inicio de sesión con Google:", error);
-        alert("Error al iniciar sesión con Google. Por favor, intenta de nuevo.");
+        // alert("Error al iniciar sesión con Google. Por favor, intenta de nuevo.");
+        console.error("Error al iniciar sesión con Google. Por favor, intenta de nuevo.");
       });
   };
 
@@ -164,7 +186,7 @@ const Login = () => {
         } else {
           throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
         }
-        alert("Inicio de sesión exitoso con Twitter.");
+        // Removed alert("Inicio de sesión exitoso con Twitter.")
         const userData = { token: data.token, userId };
         localStorage.setItem("token", userData.token);
         localStorage.setItem("userId", userData.userId);
@@ -175,11 +197,13 @@ const Login = () => {
         sessionStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath);
       } else {
-        alert("Error en la autenticación: " + (data.error || "Error desconocido"));
+        // alert("Error en la autenticación: " + (data.error || "Error desconocido"));
+        console.error("Error en la autenticación: " + (data.error || "Error desconocido"));
       }
     } catch (error) {
       console.error("Error al autenticar con Twitter:", error);
-      alert("Error en la autenticación con Twitter.");
+      // alert("Error en la autenticación con Twitter.");
+      console.error("Error en la autenticación con Twitter.");
     }
   };
 
@@ -202,7 +226,8 @@ const Login = () => {
       });
     } else {
       console.error("Google SDK no está cargado.");
-      alert("Error al cargar Google Sign-In. Por favor, intenta de nuevo.");
+      // alert("Error al cargar Google Sign-In. Por favor, intenta de nuevo.");
+      console.error("Error al cargar Google Sign-In. Por favor, intenta de nuevo.");
     }
   };
 
@@ -217,11 +242,13 @@ const Login = () => {
         window.location.href = data.url;
       } else {
         console.error("No se pudo iniciar la autenticación con GitHub");
-        alert("Error al iniciar autenticación con GitHub.");
+        // alert("Error al iniciar autenticación con GitHub.");
+        console.error("Error al iniciar autenticación con GitHub.");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Error al iniciar autenticación con GitHub.");
+      // alert("Error al iniciar autenticación con GitHub.");
+      console.error("Error al iniciar autenticación con GitHub.");
     }
   };
 
@@ -238,11 +265,13 @@ const Login = () => {
       if (data.authorization_url) {
         window.location.href = data.authorization_url;
       } else {
-        alert("No se pudo iniciar la autenticación con Twitter.");
+        // alert("No se pudo iniciar la autenticación con Twitter.");
+        console.error("No se pudo iniciar la autenticación con Twitter.");
       }
     } catch (error) {
       console.error("Error en el inicio de sesión con Twitter:", error);
-      alert("Error al iniciar autenticación con Twitter. Por favor, intenta de nuevo.");
+      // alert("Error al iniciar autenticación con Twitter. Por favor, intenta de nuevo.");
+      console.error("Error al iniciar autenticación con Twitter. Por favor, intenta de nuevo.");
     }
   };
 
@@ -256,7 +285,8 @@ const Login = () => {
       sendTwitterToken(oauthToken, oauthVerifier);
     }
     if (errorIntegridad) {
-      alert("Ya existe una cuenta con estas credenciales.");
+      // alert("Ya existe una cuenta con estas credenciales.");
+      console.error("Ya existe una cuenta con estas credenciales.");
     }
   }, []);
 
