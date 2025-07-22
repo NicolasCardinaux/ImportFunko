@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+/* import React, { useEffect, useState } from "react";
 import "../index.css";
 import { useAuth } from "../context/AuthContext";
 
@@ -186,4 +186,4 @@ const BillingDetails = ({ subtotal, iva, quantity, onShippingCalculated }) => {
   );
 };
 
-export default BillingDetails;
+export default BillingDetails;*/

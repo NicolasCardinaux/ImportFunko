@@ -43,6 +43,36 @@ const CheckoutPage = () => {
     const savedQuantities = localStorage.getItem("cartQuantities");
     return savedQuantities ? JSON.parse(savedQuantities) : {};
   });
+  const [isMpScriptLoaded, setIsMpScriptLoaded] = useState(false);
+
+  // --- Efecto para cargar dinámicamente el SDK de Mercado Pago ---
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://sdk.mercadopago.com/js/v2";
+    script.async = true;
+
+    script.onload = () => {
+      setIsMpScriptLoaded(true);
+    };
+
+    // Revisar si el script ya existe para no duplicarlo
+    if (!document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]')) {
+      document.body.appendChild(script);
+    } else {
+      setIsMpScriptLoaded(true);
+    }
+    
+    // Opcional: Limpieza al desmontar el componente
+    return () => {
+      const existingScript = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
+      if (existingScript) {
+        // En general, es mejor no removerlo si otras partes de la app lo pueden necesitar.
+        // Pero si solo se usa aquí, se podría remover.
+        // document.body.removeChild(existingScript);
+      }
+    };
+  }, []);
+
 
   // Función para normalizar strings
   const normalizeString = (str) => {
@@ -337,6 +367,10 @@ const CheckoutPage = () => {
 
   // Confirmar compra
   const confirmarCompra = async () => {
+    if (!isMpScriptLoaded) {
+      setFormError("El método de pago aún está cargando. Por favor, espere un momento.");
+      return;
+    }
     if (!validarFormulario()) return;
     if (shipping.domicilio === null) {
       setFormError("Por favor, primero calcule el costo de envío.");
@@ -344,7 +378,8 @@ const CheckoutPage = () => {
     }
 
     try {
-      const response = await fetch("https://practica-django-fxpz.onrender.com/crear-direccion/", {
+      // First fetch: Save the address
+      const addressResponse = await fetch("https://practica-django-fxpz.onrender.com/crear-direccion", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -363,15 +398,64 @@ const CheckoutPage = () => {
         }),
       });
 
-      if (!response.ok) {
+      if (!addressResponse.ok) {
         throw new Error("Error al guardar la dirección.");
       }
+      // Extract address ID from response
+      const idireccionData = await addressResponse.json();
+      const direccion_id = idireccionData.id_direccion;
 
-      // Simula el retorno de Mercado Pago redirigiendo a /thank-you
-      window.location.href = '/thank-you';
+      // Second fetch: Create Mercado Pago preference
+      const preferenceResponse = await fetch('https://practica-django-fxpz.onrender.com/create-preference-from-cart/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${user?.token}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          direccion_id: direccion_id,
+          envio: shipping.seleccion === "domicilio" ? shipping.domicilio : shipping.sucursal
+        }),
+      });
+
+      const responseText = await preferenceResponse.text();
+
+      if (!preferenceResponse.ok) {
+        console.error("Error al crear la preferencia de pago:", responseText);
+        throw new Error("Error al crear la preferencia de pago.");
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonErr) {
+        console.error("La respuesta no es JSON válido:", responseText);
+        throw new Error("Respuesta inválida del servidor.");
+      }
+
+      const preferenceId = data.preference_id;
+
+      // Load the Mercado Pago Wallet widget
+      const mp = new window.MercadoPago('APP_USR-61f3d47d-4634-4a02-9185-68f2255e63c2');
+      mp.bricks().create("wallet", "wallet_container", {
+        initialization: {
+          preferenceId: preferenceId,
+        },
+        customization: {
+          texts: {
+            valueProp: 'smart_option',
+          },
+        },
+      }).then(() => {
+        console.log("Widget de Wallet cargado correctamente");
+      }).catch(error => {
+        console.error("Error al cargar el widget de Wallet:", error);
+        setFormError("No se pudo cargar el widget de pago.");
+      });
     } catch (err) {
       console.error(err);
-      setFormError("No se pudo guardar la dirección.");
+      setFormError(err.message || "Ocurrió un error durante el proceso de compra.");
     }
   };
 
@@ -507,9 +591,14 @@ const CheckoutPage = () => {
           <input type="radio" checked readOnly /> Pago con Mercado Pago
         </label>
 
-        <button onClick={confirmarCompra} className="confirm-purchase-button">
-          Proceder con la compra
+        <button
+          onClick={confirmarCompra}
+          className="confirm-purchase-button"
+          disabled={!isMpScriptLoaded}
+        >
+          {isMpScriptLoaded ? 'Proceder con la compra' : 'Cargando pago...'}
         </button>
+        <div id="wallet_container"></div>
       </div>
     </div>
   );

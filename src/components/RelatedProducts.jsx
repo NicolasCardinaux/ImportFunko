@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import redCircle from "../assets/red-circle-free-png.png";
 
 const RelatedProducts = ({ productId, category }) => {
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [funkoDiscounts, setFunkoDiscounts] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Fetch de productos relacionados
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
@@ -59,10 +63,33 @@ const RelatedProducts = ({ productId, category }) => {
     }
   }, [productId, category]);
 
-  if (loading) return <div>Cargando productos relacionados...</div>;
-  if (error) return <div className="error-message">Error: {error}</div>;
-  if (relatedProducts.length === 0) return <div>No hay productos relacionados con esta categoría.</div>;
+  // Fetch de funkodescuentos y descuentos
+  useEffect(() => {
+    fetch("https://practica-django-fxpz.onrender.com/funkodescuentos")
+      .then((res) => res.json())
+      .then((data) => setFunkoDiscounts(data[0] || []))
+      .catch((err) => console.error("Error al cargar funkodescuentos", err));
 
+    fetch("https://practica-django-fxpz.onrender.com/descuentos")
+      .then((res) => res.json())
+      .then((data) => setDiscounts(data.Descuentos || []))
+      .catch((err) => console.error("Error al cargar descuentos", err));
+  }, []);
+
+  // Funciones auxiliares para manejar descuentos
+  const getDiscountPercentage = (productId) => {
+    const funkoDiscount = funkoDiscounts.find((d) => d.funko === productId);
+    if (!funkoDiscount) return null;
+    const discount = discounts.find((d) => d.idDescuento === funkoDiscount.descuento);
+    return discount ? discount.porcentaje : null;
+  };
+
+  const getDiscountedPrice = (productId, originalPrice) => {
+    const percentage = getDiscountPercentage(productId);
+    return percentage ? (originalPrice * (1 - percentage / 100)).toFixed(2) : null;
+  };
+
+  // Handlers para navegación
   const handleViewMore = () => {
     navigate(`/?category=${encodeURIComponent(category)}`);
   };
@@ -71,19 +98,35 @@ const RelatedProducts = ({ productId, category }) => {
     navigate(`/product/${id}`);
   };
 
+  // Renderizado condicional
+  if (loading) return <div>Cargando productos relacionados...</div>;
+  if (error) return <div className="error-message">Error: {error}</div>;
+  if (relatedProducts.length === 0) return <div>No hay productos relacionados con esta categoría.</div>;
+
   return (
     <div className="related-products">
       <h3>Productos relacionados (Categoría: {category})</h3>
       <div className="related-products-list">
         {relatedProducts.map((relatedProduct) => {
           const isOutOfStock = relatedProduct.stock === 0;
+          const discountPercentage = getDiscountPercentage(relatedProduct.idFunko);
+          const discountedPrice = getDiscountedPrice(relatedProduct.idFunko, relatedProduct.precio);
 
           return (
             <div
               key={relatedProduct.idFunko}
               className={`related-product-item ${isOutOfStock ? "out-of-stock" : ""}`}
-              onClick={() => !isOutOfStock && handleProductClick(relatedProduct.idFunko)} // Evita clics si está agotado
+              onClick={() => !isOutOfStock && handleProductClick(relatedProduct.idFunko)}
             >
+              {discountPercentage && (
+                <div
+                  className="discount-badge"
+                  style={{ backgroundImage: `url(${redCircle})` }}
+                >
+                  -{discountPercentage}%
+                </div>
+              )}
+
               <img
                 src={relatedProduct.imagen?.url || "https://via.placeholder.com/150"}
                 alt={relatedProduct.nombre || "Funko"}
@@ -91,7 +134,15 @@ const RelatedProducts = ({ productId, category }) => {
                 onError={(e) => (e.target.src = "https://via.placeholder.com/150")}
               />
               <h4>{relatedProduct.nombre || "Sin nombre"}</h4>
-              <p>${relatedProduct.precio?.toFixed(2) || "0.00"}</p>
+
+              {discountPercentage ? (
+                <div className="product-item-price-container">
+                  <p className="product-item-original-price">${relatedProduct.precio.toFixed(2)}</p>
+                  <p className="product-item-discounted-price">${discountedPrice}</p>
+                </div>
+              ) : (
+                <p>${relatedProduct.precio?.toFixed(2) || "0.00"}</p>
+              )}
             </div>
           );
         })}

@@ -2852,7 +2852,51 @@ body.dark-mode .no-related-message {
 
 .related-product-item {
   overflow: hidden;
+  position: relative;
 }
+
+.discount-badge {
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  width: 120px;
+  height: 120px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+
+.product-item-price-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.product-item-original-price {
+  font-size: 0.9rem;
+  color: #888;
+  text-decoration: line-through;
+}
+
+.product-item-discounted-price {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #D32F2F;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.2) 
+}
+
 
 
 @media (max-width: 768px) {
