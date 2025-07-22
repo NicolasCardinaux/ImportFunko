@@ -198,7 +198,7 @@ const CartPage = () => {
     return cartItems.reduce((total, item) => {
       const price = getDiscountedPrice(item.funko, item.price);
       const quantity = quantities[item.idCarritoItem] || 1;
-      return total + price * quantity;
+      return total + parseFloat(price) * quantity;
     }, 0);
   };
 
@@ -295,8 +295,7 @@ const CartPage = () => {
           <div className="cart-summary">
             <h3>Resumen de Compra</h3>
             <p>Subtotal: ${calculateTotal().toFixed(2)}</p>
-            <p>Impuestos: ${(calculateTotal() * 0.21).toFixed(2)} (21%)</p>
-            <p className="total-price">Total: ${(calculateTotal() * 1.21).toFixed(2)}</p>
+            <p className="total-price">Total: ${calculateTotal().toFixed(2)}</p>
             <button className="cart-checkout-button" onClick={() => navigate("/checkout")}>
               Realizar Compra
             </button>
