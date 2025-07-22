@@ -27,7 +27,7 @@ const CheckoutPage = () => {
   const [ciudades, setCiudades] = useState([]);
   const [ciudadInput, setCiudadInput] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
-  const [subtotal, setSubtotal] = useState(0);
+  const [subtotal, setSubtotal] = useState(null);
   const [cantidad, setCantidad] = useState(0);
   const [shipping, setShipping] = useState({ domicilio: null, sucursal: null, seleccion: "domicilio" });
   const [error, setError] = useState("");
@@ -36,6 +36,7 @@ const CheckoutPage = () => {
   const [cargandoCiudades, setCargandoCiudades] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isLoadingPostalCode, setIsLoadingPostalCode] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(true);
   const [funkoDiscounts, setFunkoDiscounts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [quantities, setQuantities] = useState(() => {
@@ -54,24 +55,19 @@ const CheckoutPage = () => {
       setIsMpScriptLoaded(true);
     };
 
-    // Revisar si el script ya existe para no duplicarlo
     if (!document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]')) {
       document.body.appendChild(script);
     } else {
       setIsMpScriptLoaded(true);
     }
     
-    // Opcional: Limpieza al desmontar el componente
     return () => {
       const existingScript = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
       if (existingScript) {
-        // En general, es mejor no removerlo si otras partes de la app lo pueden necesitar.
-        // Pero si solo se usa aquí, se podría remover.
-        // document.body.removeChild(existingScript);
+        // Opcional: remover el script si no se usa en otro lado
       }
     };
   }, []);
-
 
   // Función para normalizar strings
   const normalizeString = (str) => {
@@ -157,32 +153,42 @@ const CheckoutPage = () => {
       .catch(console.error);
   }, []);
 
-  // Obtener carrito del usuario
+  // Obtener carrito del usuario (refactorizado)
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
 
     const fetchCart = async () => {
+      setIsCartLoading(true);
+      setError("");
+
       if (!token || !userId) {
         setError("Debes iniciar sesión para proceder con la compra.");
+        setIsCartLoading(false);
         return;
       }
 
       try {
-        const cartResponse = await fetch(`https://practica-django-fxpz.onrender.com/usuarios/${userId}/carrito/`, {
-          method: "GET",
-          headers: {
-            Authorization: `Token ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const [cartResponse, funkosResponse] = await Promise.all([
+            fetch(`https://practica-django-fxpz.onrender.com/usuarios/${userId}/carrito/`, {
+                method: "GET",
+                headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+            }),
+            fetch("https://practica-django-fxpz.onrender.com/funkos", {
+                headers: { Authorization: `Token ${token}` },
+            }),
+        ]);
 
-        if (!cartResponse.ok) {
-          const text = await cartResponse.text();
-          throw new Error(`Error ${cartResponse.status}: ${text}`);
-        }
+        if (!cartResponse.ok) throw new Error(`Error al obtener el carrito: ${cartResponse.status}`);
+        if (!funkosResponse.ok) throw new Error("Error al obtener los productos.");
 
         const cartData = await cartResponse.json();
+        const funkosData = await funkosResponse.json();
+        
+        if (!Array.isArray(funkosData.funkos)) {
+          throw new Error("Los datos de los productos no tienen el formato esperado.");
+        }
+
         if (!cartData.items || cartData.items.length === 0) {
           setSubtotal(0);
           setCantidad(0);
@@ -190,23 +196,7 @@ const CheckoutPage = () => {
           return;
         }
 
-        const funkosResponse = await fetch("https://practica-django-fxpz.onrender.com/funkos", {
-          headers: { Authorization: `Token ${token}` },
-        });
-        if (!funkosResponse.ok) {
-          throw new Error("Error al obtener funkos");
-        }
-        const funkosData = await funkosResponse.json();
-
-        const groupedItems = cartData.items.reduce((acc, item) => {
-          const key = item.funko;
-          if (!acc[key]) {
-            acc[key] = { ...item, idCarritoItem: item.idCarritoItem, cantidad: item.cantidad };
-          }
-          return acc;
-        }, {});
-
-        const itemsWithDetails = Object.values(groupedItems).map((item) => {
+        const itemsWithDetails = cartData.items.map((item) => {
           const funko = funkosData.funkos.find((f) => f.idFunko === item.funko);
           return {
             ...item,
@@ -216,7 +206,6 @@ const CheckoutPage = () => {
           };
         });
 
-        // Calcular el total usando quantities de localStorage
         const total = itemsWithDetails.reduce((acc, item) => {
           const price = parseFloat(getDiscountedPrice(item.funko, item.price));
           const quantity = quantities[item.idCarritoItem] || item.cantidad || 1;
@@ -228,19 +217,20 @@ const CheckoutPage = () => {
           return acc + quantity;
         }, 0);
 
-        console.log("[CheckoutPage] Cantidad total calculada:", totalCantidad);
-        console.log("[CheckoutPage] Subtotal calculado:", total);
-
         setSubtotal(total);
         setCantidad(totalCantidad);
+
       } catch (err) {
         setError(err.message);
+        setSubtotal(0);
+      } finally {
+        setIsCartLoading(false);
       }
     };
 
-    if (token && userId) fetchCart();
-  }, [quantities]);
-
+    if (user) fetchCart();
+  }, [quantities, user]);
+  
   // Manejo del cambio en los inputs
   const handleChange = (e) => {
     setFormError("");
@@ -340,17 +330,13 @@ const CheckoutPage = () => {
       const { lat, lng } = data.results[0].geometry;
       const distance = calculateDistance(ORIGIN_LAT, ORIGIN_LON, lat, lng);
 
-      // Calcular costo base
       const baseCost = distance * PRICE_PER_KM;
 
-      // Aplicar incremento del 10% por cada producto adicional
       let domicilio = baseCost;
       for (let i = 1; i < cantidad; i++) {
-        domicilio = domicilio * 1.1; // Sumar 10% sobre el valor anterior
+        domicilio = domicilio * 1.1;
       }
-      const sucursal = domicilio * 0.8; // Sucursal es 80% del costo a domicilio
-
-      console.log("[CheckoutPage] Cálculo de envío - Código postal:", form.codigoPostal, "Cantidad:", cantidad, "Distancia:", distance, "Costo Domicilio:", Math.round(domicilio), "Costo Sucursal:", Math.round(sucursal));
+      const sucursal = domicilio * 0.8;
 
       setShipping({ domicilio: Math.round(domicilio), sucursal: Math.round(sucursal), seleccion: "domicilio" });
     } catch (err) {
@@ -375,7 +361,6 @@ const CheckoutPage = () => {
     }
 
     try {
-      // First fetch: Save the address
       const addressResponse = await fetch("https://practica-django-fxpz.onrender.com/crear-direccion", {
         method: "POST",
         headers: {
@@ -398,11 +383,10 @@ const CheckoutPage = () => {
       if (!addressResponse.ok) {
         throw new Error("Error al guardar la dirección.");
       }
-      // Extract address ID from response
+      
       const idireccionData = await addressResponse.json();
       const direccion_id = idireccionData.id_direccion;
 
-      // Second fetch: Create Mercado Pago preference
       const preferenceResponse = await fetch('https://practica-django-fxpz.onrender.com/create-preference-from-cart/', {
         method: 'POST',
         headers: {
@@ -432,8 +416,7 @@ const CheckoutPage = () => {
       }
 
       const preferenceId = data.preference_id;
-
-      // Load the Mercado Pago Wallet widget
+      
       const mp = new window.MercadoPago('APP_USR-61f3d47d-4634-4a02-9185-68f2255e63c2');
       mp.bricks().create("wallet", "wallet_container", {
         initialization: {
@@ -444,8 +427,6 @@ const CheckoutPage = () => {
             valueProp: 'smart_option',
           },
         },
-      }).then(() => {
-        console.log("Widget de Wallet cargado correctamente");
       }).catch(error => {
         console.error("Error al cargar el widget de Wallet:", error);
         setFormError("No se pudo cargar el widget de pago.");
@@ -456,13 +437,14 @@ const CheckoutPage = () => {
     }
   };
 
+
   const envioSeleccionado = shipping.seleccion === "domicilio" ? shipping.domicilio : shipping.sucursal;
-  const totalFinal = subtotal + (envioSeleccionado || 0);
+  const totalFinal = (subtotal || 0) + (envioSeleccionado || 0);
 
   return (
     <div className="checkout-page">
       <div className="billing-details-container">
-        <h2>Detalles de Facturación</h2>
+         <h2>Detalles de Facturación</h2>
         <div className="billing-form">
           <select
             name="provincia"
@@ -579,9 +561,15 @@ const CheckoutPage = () => {
 
       <div className="checkout-summary">
         <h3>Resumen de Compra</h3>
-        <p>Subtotal: ${subtotal.toFixed(2)}</p>
-        <p>Envío: ${envioSeleccionado !== null ? envioSeleccionado.toFixed(2) : '0.00'}</p>
-        <p className="total-price">Total: ${totalFinal.toFixed(2)}</p>
+        {isCartLoading ? (
+          <p>Cargando resumen...</p>
+        ) : (
+          <>
+            <p>Subtotal: ${subtotal !== null ? subtotal.toFixed(2) : '0.00'}</p>
+            <p>Envío: ${envioSeleccionado !== null ? envioSeleccionado.toFixed(2) : 'A calcular'}</p>
+            <p className="total-price">Total: ${totalFinal.toFixed(2)}</p>
+          </>
+        )}
 
         <label className="mercado-pago-label">
           <input type="radio" checked readOnly /> Pago con Mercado Pago
@@ -590,7 +578,7 @@ const CheckoutPage = () => {
         <button
           onClick={confirmarCompra}
           className="confirm-purchase-button"
-          disabled={!isMpScriptLoaded}
+          disabled={!isMpScriptLoaded || isCartLoading}
         >
           {isMpScriptLoaded ? 'Proceder con la compra' : 'Cargando pago...'}
         </button>
