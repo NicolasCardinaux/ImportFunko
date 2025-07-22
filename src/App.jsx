@@ -38,27 +38,37 @@ function AppContent() {
   const [currentCount, setCurrentCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, setIsAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth(); // Obtener el objeto 'user' del contexto
 
-  // HE ELIMINADO EL useEffect QUE REDIRIGÍA A LOS ADMINISTRADORES DESDE AQUÍ.
-  // Esa lógica ahora solo reside en Login.jsx para la redirección inicial
-  // y en App.jsx del panel de administración para la protección de rutas.
-
-  // useEffect existente para la redirección de usuarios no autenticados
+  // useEffect para manejar la redirección de usuarios autenticados,
+  // incluyendo la redirección específica para administradores.
   useEffect(() => {
-    if (
+    // Si el usuario está autenticado y está en la página de login
+    if (isAuthenticated && location.pathname === "/login") {
+      // Verificar si el usuario es administrador
+      const isStaff = user && user.isStaff; // Acceder a isStaff desde el objeto user del contexto
+
+      if (isStaff) {
+        console.log("App.jsx: Usuario admin logueado, redirigiendo a panel de administración.");
+        window.location.href = "https://importfunko-admin.vercel.app";
+      } else {
+        console.log("App.jsx: Usuario común logueado en /login, redirigiendo a /.");
+        navigate("/", { replace: true });
+      }
+    }
+    // Si el usuario NO está autenticado y está intentando acceder a rutas protegidas
+    else if (
       !isAuthenticated &&
       location.pathname !== "/login" &&
       location.pathname !== "/register" &&
       location.pathname !== "/quienes-somos" &&
       !location.pathname.startsWith("/product/") &&
-      location.pathname !== "/thank-you" // Permitir acceso a la página de agradecimiento
+      location.pathname !== "/thank-you"
     ) {
-      navigate("/", { replace: true });
-    } else if (isAuthenticated && location.pathname === "/login") {
+      console.log("App.jsx: Usuario no autenticado en ruta protegida, redirigiendo a /.");
       navigate("/", { replace: true });
     }
-  }, [isAuthenticated, location.pathname, navigate]);
+  }, [isAuthenticated, location.pathname, navigate, user]); // Dependencias: isAuthenticated, location.pathname, navigate, y user
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -90,7 +100,7 @@ function AppContent() {
         location.pathname === "/favoritos" ||
         location.pathname === "/cart" ||
         location.pathname === "/my-purchases" ||
-        location.pathname === "/thank-you") && // Incluir la página de agradecimiento
+        location.pathname === "/thank-you") &&
         !isAuthPage && <Banner />}
 
       <main className="app-main">
@@ -131,8 +141,7 @@ function AppContent() {
             path="/mis-datos"
             element={<AccountPage setIsAuthenticated={setIsAuthenticated} />}
           />
-          <Route path="/thank-you" element={<ThankYouComponent />} /> {/* Nueva ruta */}
-          {/* Ruta comodín para cualquier otra ruta no definida */}
+          <Route path="/thank-you" element={<ThankYouComponent />} />
           <Route path="*" element={
             <div style={{
               display: 'flex',

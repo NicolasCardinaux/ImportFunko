@@ -15,7 +15,7 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { login } = useAuth(); // Obtener la función login del contexto
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -100,8 +100,8 @@ const Login = () => {
         localStorage.setItem("userId", userId);
         localStorage.setItem("isStaff", isStaffForStorage); // Se guarda como "true" o "false" (string)
 
-        // Actualizar el contexto de autenticación
-        login({ token, userId });
+        // Actualizar el contexto de autenticación, pasando isStaff
+        login({ token, userId, isStaff: isStaffForStorage }); // <-- PASAR isStaff AQUÍ
 
         console.log("Token almacenado en localStorage:", localStorage.getItem("token"));
         console.log("ID de usuario almacenado en localStorage:", localStorage.getItem("userId"));
@@ -157,7 +157,7 @@ const Login = () => {
           localStorage.setItem("token", userData.token);
           localStorage.setItem("userId", userData.userId);
           localStorage.setItem("isStaff", isStaff); // ALMACENAR is_staff para Google
-          login(userData);
+          login({ token: userData.token, userId: userData.userId, isStaff }); // <-- PASAR isStaff AQUÍ
           console.log("Token almacenado en localStorage (Google):", localStorage.getItem("token"));
           console.log("ID de usuario almacenado en localStorage (Google):", localStorage.getItem("userId"));
           console.log("isStaff almacenado en localStorage (Google):", localStorage.getItem("isStaff"));
@@ -203,7 +203,7 @@ const Login = () => {
         localStorage.setItem("token", userData.token);
         localStorage.setItem("userId", userData.userId);
         localStorage.setItem("isStaff", isStaff); // ALMACENAR is_staff para Twitter
-        login(userData);
+        login({ token: userData.token, userId: userData.userId, isStaff }); // <-- PASAR isStaff AQUÍ
         console.log("Token almacenado en localStorage (Twitter):", localStorage.getItem("token"));
         console.log("ID de usuario almacenado en localStorage (Twitter):", localStorage.getItem("userId"));
         console.log("isStaff almacenado en localStorage (Twitter):", localStorage.getItem("isStaff"));
