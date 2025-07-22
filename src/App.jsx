@@ -137,10 +137,8 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/favoritos" element={<FavoritesPage />} />
-          <Route
-            path="/mis-datos"
-            element={<AccountPage setIsAuthenticated={setIsAuthenticated} />}
-          />
+          <Route path="/mis-datos" element={<AccountPage />} />
+
           <Route path="/thank-you" element={<ThankYouComponent />} />
           <Route path="*" element={
             <div style={{
