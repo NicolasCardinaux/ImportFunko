@@ -43,35 +43,19 @@ function AppContent() {
   // Nuevo useEffect para la redirección de administradores
   useEffect(() => {
     const token = localStorage.getItem("token");
+    // Obtener isStaff directamente de localStorage y convertirlo a booleano
+    const isStaff = localStorage.getItem("isStaff") === 'true';
 
-    // Si no hay token, no hacemos nada aquí, la otra lógica de autenticación lo manejará
-    if (!token) return;
+    // Si no hay token o el usuario no es staff, no hacemos nada aquí.
+    // La lógica de autenticación general se encargará de los no autenticados.
+    if (!token || !isStaff) {
+      return;
+    }
 
-    // Validamos el token para ver si el usuario es administrador
-    fetch("https://practica-django-fxpz.onrender.com/api/user/", {
-      headers: {
-        Authorization: `Token ${token}`, // Usamos "Token" para Django REST Token Auth
-      },
-    })
-      .then((res) => {
-        // Si la respuesta no es OK (ej. token inválido/expirado), lo ignoramos o manejamos el error
-        // No lanzamos un error aquí para no interferir con la lógica de autenticación general
-        if (!res.ok) {
-          console.error("Error al validar el token para el admin (posiblemente token inválido/expirado):", res.status);
-          return null; // Retornamos null para no procesar más
-        }
-        return res.json();
-      })
-      .then((user) => {
-        // Si el usuario existe y es un administrador, lo redirigimos
-        if (user && user.is_staff) {
-          window.location.href = "https://importfunko-admin.vercel.app";
-        }
-      })
-      .catch((error) => {
-        console.error("Error al validar el token para el admin:", error);
-        // Aquí no redirigimos, ya que la lógica de `isAuthenticated` se encargará si el token es realmente inválido.
-      });
+    // Si el token existe y el usuario es un administrador, lo redirigimos
+    // Ya no se necesita la llamada fetch a /api/user/ en este punto.
+    window.location.href = "https://importfunko-admin.vercel.app";
+
   }, [isAuthenticated]); // Dependencia de isAuthenticated para re-validar si cambia el estado de login
 
   // useEffect existente para la redirección de usuarios no autenticados
@@ -82,7 +66,7 @@ function AppContent() {
       location.pathname !== "/register" &&
       location.pathname !== "/quienes-somos" &&
       !location.pathname.startsWith("/product/") &&
-      location.pathname !== "/thank-you" // Allow access to thank-you page
+      location.pathname !== "/thank-you" // Permitir acceso a la página de agradecimiento
     ) {
       navigate("/", { replace: true });
     } else if (isAuthenticated && location.pathname === "/login") {
@@ -120,7 +104,7 @@ function AppContent() {
         location.pathname === "/favoritos" ||
         location.pathname === "/cart" ||
         location.pathname === "/my-purchases" ||
-        location.pathname === "/thank-you") && // Include thank-you page
+        location.pathname === "/thank-you") && // Incluir la página de agradecimiento
         !isAuthPage && <Banner />}
 
       <main className="app-main">
@@ -162,7 +146,7 @@ function AppContent() {
             element={<AccountPage setIsAuthenticated={setIsAuthenticated} />}
           />
           <Route path="/thank-you" element={<ThankYouComponent />} /> {/* Nueva ruta */}
-          {/* Catch-all route for any other path not defined */}
+          {/* Ruta comodín para cualquier otra ruta no definida */}
           <Route path="*" element={
             <div style={{
               display: 'flex',
