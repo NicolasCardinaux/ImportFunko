@@ -1,0 +1,223 @@
+body {
+    display: flex;
+    top: 0;
+    height: 100%;
+    margin-left: 20px;
+    padding: 0;
+}
+
+.listar {
+    display: block;
+    width: 100%;
+    padding: 20px;
+    margin-bottom: 160px;
+}
+
+.input-busqueda {
+    display: flex;
+    width: 91%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: left;
+    margin-left: 0;
+}
+
+.listar h2 {
+    color: #333;
+    text-align: left;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.tabla-container {
+    display: flex;
+    position: absolute;
+}
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabla thead {
+    background-color: #41575F;
+    color: white;
+}
+
+.tabla th,
+.tabla td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.tabla th {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.tabla tbody tr:hover {
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease;
+}
+
+.tabla td {
+    color: #555;
+    font-size: 14px;
+}
+
+.tabla td:nth-child(1),
+.tabla td:nth-child(4) {
+    text-transform: capitalize;
+}
+
+.filtros-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filtro-categoria {
+    flex: 0 0 200px;
+}
+
+.select-categoria {
+    display: flex;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: left;
+    background-color: white;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+}
+
+.input-busqueda {
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+
+.error-mensaje {
+    color: red;
+    margin-bottom: 15px;
+}
+
+.acciones-celda {
+    text-align: center;
+    width: 80px;
+}
+
+.btn-eliminar {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-eliminar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-eliminar:hover:not(:disabled) {
+    background-color: #f5f5f5;
+}
+
+.icono-basura {
+    width: 18px;
+    height: 18px;
+    fill: #555;
+    transition: fill 0.2s;
+}
+
+.btn-eliminar:hover:not(:disabled) .icono-basura {
+    fill: #ff3333;
+}
+
+tr.eliminando {
+    opacity: 0.5;
+    background-color: #ffe6e6;
+    transition: opacity 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .listar {
+        width: 95%;
+        padding: 10px;
+    }
+
+    .tabla {
+        display: flex;
+        overflow-x: auto;
+    }
+
+    .tabla thead,
+    .tabla tbody,
+    .tabla th,
+    .tabla td,
+    .tabla tr {
+        display: flex;
+    }
+
+    .tabla thead {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .tabla tbody tr {
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .tabla td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+    }
+
+    .tabla td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        text-align: left;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .filtros-container {
+        flex-direction: column;
+    }
+
+    .filtro-categoria {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+
+    .select-categoria {
+        width: 100%;
+    }
+
+    .input-busqueda {
+        width: 100%;
+    }
+}

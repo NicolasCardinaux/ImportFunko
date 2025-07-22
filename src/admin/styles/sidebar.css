@@ -1,0 +1,51 @@
+body{
+    position: relative;
+    height: 100%;
+}
+
+.sidebar {
+    width: 200px;
+    background: white;
+    color: #333;
+    padding: 20px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.sidebar h3 {
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+}
+
+.sidebar a {
+    display: block;
+    color: #333;
+    text-decoration: none;
+    padding: 8px 0;
+}
+
+.content {
+    margin-left: 220px;
+    padding: 0px 20px 0px 200px;
+}
+
+.nav-link {
+    display: block;
+    color: #333;
+    text-decoration: none;
+    padding: 8px 0;
+}
+
+.nav-link:hover {
+    color: #555;
+}
+
+.nav-link.active {
+    background: #ddd;
+    color: #000;
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 5px;
+}
