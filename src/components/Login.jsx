@@ -77,9 +77,8 @@ const Login = () => {
         const data = await response.json();
         console.log("Respuesta completa del servidor:", data);
 
-        // Extract token and user data
         const token = data.Token || data.token;
-        const user = data.Usuario || data.user; // Assuming user data might be under 'Usuario' or 'user'
+        const user = data.Usuario || data.user;
 
         if (!token) {
           throw new Error("No se recibió un token de la respuesta.");
@@ -89,25 +88,33 @@ const Login = () => {
         }
 
         const userId = user.idUsuario;
-        const isStaff = user.is_staff; // Get the is_staff flag
+        const isStaffBackend = user.is_staff; // Obtener el valor de is_staff del backend
 
-        // Store token, userId, AND isStaff in localStorage
+        console.log("is_staff recibido del backend:", isStaffBackend, "Tipo:", typeof isStaffBackend);
+
+        // Asegurarse de que isStaff sea un booleano verdadero para localStorage y la redirección
+        const isStaffForStorage = Boolean(isStaffBackend);
+
+        // Almacenar token, userId y isStaff en localStorage
         localStorage.setItem("token", token);
         localStorage.setItem("userId", userId);
-        localStorage.setItem("isStaff", isStaff); // <-- ALMACENAR is_staff
-        login({ token, userId }); // Update AuthContext
+        localStorage.setItem("isStaff", isStaffForStorage); // Se guarda como "true" o "false" (string)
+
+        // Actualizar el contexto de autenticación
+        login({ token, userId });
 
         console.log("Token almacenado en localStorage:", localStorage.getItem("token"));
         console.log("ID de usuario almacenado en localStorage:", localStorage.getItem("userId"));
-        console.log("isStaff almacenado en localStorage:", localStorage.getItem("isStaff"));
+        console.log("isStaff almacenado en localStorage (después de guardar):", localStorage.getItem("isStaff"));
 
-        // Redirect based on is_staff status
-        if (isStaff) {
-          // If is_staff is true, redirect to the admin panel
-          // Ya no es necesario pasar el token por la URL, el admin app lo leerá de localStorage
+        // Redirigir basado en el estado de is_staff
+        if (isStaffForStorage) { // Usar el valor booleano para la redirección
+          console.log("Redirigiendo a panel de administración...");
           window.location.href = "https://importfunko-admin.vercel.app";
+          // IMPORTANTE: Después de window.location.href, la ejecución de este script se detiene
+          // y el navegador carga la nueva URL. No se ejecutará el navigate() posterior.
         } else {
-          // Regular user, navigate to home
+          console.log("Redirigiendo a tienda común...");
           const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
           sessionStorage.removeItem("redirectAfterLogin");
           navigate(redirectPath);
@@ -136,12 +143,12 @@ const Login = () => {
         console.log("Respuesta completa de Google login:", JSON.stringify(data, null, 2));
         if (data.success) {
           let userId;
-          let isStaff = false; // Default to false for social logins unless explicitly returned
+          let isStaff = false; // Default a false a menos que se obtenga explícitamente
           if (data.idUsuario) {
             userId = data.idUsuario;
           } else if (data.usuario && data.usuario.idUsuario) {
             userId = data.usuario.idUsuario;
-            isStaff = data.usuario.is_staff; // Get is_staff if available
+            isStaff = data.usuario.is_staff; // Obtener is_staff si está disponible
           } else {
             console.error("Estructura de respuesta inesperada:", data);
             throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
@@ -149,13 +156,12 @@ const Login = () => {
           const userData = { token: data.token, userId };
           localStorage.setItem("token", userData.token);
           localStorage.setItem("userId", userData.userId);
-          localStorage.setItem("isStaff", isStaff); // <-- ALMACENAR is_staff para Google
+          localStorage.setItem("isStaff", isStaff); // ALMACENAR is_staff para Google
           login(userData);
           console.log("Token almacenado en localStorage (Google):", localStorage.getItem("token"));
           console.log("ID de usuario almacenado en localStorage (Google):", localStorage.getItem("userId"));
           console.log("isStaff almacenado en localStorage (Google):", localStorage.getItem("isStaff"));
 
-          // Redirect based on is_staff status for social logins
           if (isStaff) {
             window.location.href = "https://importfunko-admin.vercel.app";
           } else {
@@ -184,25 +190,24 @@ const Login = () => {
       console.log("Respuesta completa de Twitter login:", data);
       if (data.success) {
         let userId;
-        let isStaff = false; // Default to false for social logins unless explicitly returned
+        let isStaff = false; // Default a false a menos que se obtenga explícitamente
         if (data.idUsuario) {
           userId = data.idUsuario;
         } else if (data.Usuario && data.Usuario.idUsuario) {
           userId = data.Usuario.idUsuario;
-          isStaff = data.Usuario.is_staff; // Get is_staff if available
+          isStaff = data.Usuario.is_staff; // Obtener is_staff si está disponible
         } else {
           throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
         }
         const userData = { token: data.token, userId };
         localStorage.setItem("token", userData.token);
         localStorage.setItem("userId", userData.userId);
-        localStorage.setItem("isStaff", isStaff); // <-- ALMACENAR is_staff para Twitter
+        localStorage.setItem("isStaff", isStaff); // ALMACENAR is_staff para Twitter
         login(userData);
         console.log("Token almacenado en localStorage (Twitter):", localStorage.getItem("token"));
         console.log("ID de usuario almacenado en localStorage (Twitter):", localStorage.getItem("userId"));
         console.log("isStaff almacenado en localStorage (Twitter):", localStorage.getItem("isStaff"));
 
-        // Redirect based on is_staff status for social logins
         if (isStaff) {
           window.location.href = "https://importfunko-admin.vercel.app";
         } else {
