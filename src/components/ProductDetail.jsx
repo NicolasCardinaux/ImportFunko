@@ -133,7 +133,6 @@ const ProductDetail = () => {
     }
   }, [product, funkoDiscounts, discounts, id]);
 
-  // Verificar si el producto está en favoritos
   useEffect(() => {
     const checkIfFavorite = async () => {
       if (!token) return;

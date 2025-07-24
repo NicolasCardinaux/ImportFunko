@@ -11,8 +11,7 @@ const Header = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
-
+  const { isAuthenticated, logout, user } = useAuth();
 
   useEffect(() => {
     let timeoutId;
@@ -20,9 +19,8 @@ const Header = ({ onSearch }) => {
     if (menuOpen) {
       timeoutId = setTimeout(() => {
         setMenuOpen(false);
-      }, 4000); 
+      }, 4000);
     }
-
 
     return () => clearTimeout(timeoutId);
   }, [menuOpen]);
@@ -73,15 +71,20 @@ const Header = ({ onSearch }) => {
             <FaSearch />
           </button>
         </div>
-        <ThemeToggleButton />
+        <ThemeToggleButton /> {}
+        {isAuthenticated && user?.isStaff && (
+          <button className="btn-admin-panel" onClick={() => navigate("/admin")}>
+            Panel Admin
+          </button>
+        )}
       </div>
 
       <div className="header__icons">
         {isAuthenticated ? (
           <>
-            <FaShoppingCart className="header__icon" onClick={() => navigate("/cart")} />
+            <FaShoppingCart className="header__icon" onClick={() => navigate("/cart")} /> {}
             <div className="header__user-icon" onClick={toggleMenu}>
-              <FaUser />
+              <FaUser /> {}
             </div>
             {menuOpen && (
               <div className="header__dropdown">

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { crearCategoria } from "../utils/api";
+import '../styles/form.css';
 
 const CrearCategoria = () => {
   const [categoria, setCategoria] = useState({

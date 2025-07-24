@@ -85,12 +85,18 @@ const Login = () => {
           throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
         }
         alert("Inicio de sesión exitoso.");
-        const userData = { token: data.Token || data.token, userId };
+        const userData = {
+          token: data.Token || data.token,
+          userId,
+          isStaff: data.is_staff ?? data.Usuario?.is_staff ?? false,
+        };
         localStorage.setItem("token", userData.token);
         localStorage.setItem("userId", userData.userId);
+        localStorage.setItem("isStaff", userData.isStaff);
         login(userData);
         console.log("Token almacenado en localStorage:", localStorage.getItem("token"));
         console.log("ID de usuario almacenado en localStorage:", localStorage.getItem("userId"));
+        console.log("isStaff almacenado en localStorage:", localStorage.getItem("isStaff"));
         const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
         sessionStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath);
@@ -127,12 +133,18 @@ const Login = () => {
             throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
           }
           alert("Inicio de sesión exitoso con Google.");
-          const userData = { token: data.token, userId };
+          const userData = {
+            token: data.token,
+            userId,
+            isStaff: data.is_staff ?? data.usuario?.is_staff ?? false,
+          };
           localStorage.setItem("token", userData.token);
           localStorage.setItem("userId", userData.userId);
+          localStorage.setItem("isStaff", userData.isStaff);
           login(userData);
           console.log("Token almacenado en localStorage (Google):", localStorage.getItem("token"));
           console.log("ID de usuario almacenado en localStorage (Google):", localStorage.getItem("userId"));
+          console.log("isStaff almacenado en localStorage (Google):", localStorage.getItem("isStaff"));
           const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
           sessionStorage.removeItem("redirectAfterLogin");
           navigate(redirectPath);
@@ -165,12 +177,18 @@ const Login = () => {
           throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
         }
         alert("Inicio de sesión exitoso con Twitter.");
-        const userData = { token: data.token, userId };
+        const userData = {
+          token: data.token,
+          userId,
+          isStaff: data.is_staff ?? data.Usuario?.is_staff ?? false,
+        };
         localStorage.setItem("token", userData.token);
         localStorage.setItem("userId", userData.userId);
+        localStorage.setItem("isStaff", userData.isStaff);
         login(userData);
         console.log("Token almacenado en localStorage (Twitter):", localStorage.getItem("token"));
         console.log("ID de usuario almacenado en localStorage (Twitter):", localStorage.getItem("userId"));
+        console.log("isStaff almacenado en localStorage (Twitter):", localStorage.getItem("isStaff"));
         const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
         sessionStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath);
@@ -239,6 +257,7 @@ const Login = () => {
         window.location.href = data.authorization_url;
       } else {
         alert("No se pudo iniciar la autenticación con Twitter.");
+        console.error("Respuesta inválida de Twitter:", data);
       }
     } catch (error) {
       console.error("Error en el inicio de sesión con Twitter:", error);

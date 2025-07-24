@@ -1,5 +1,5 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const API_TOKEN = process.env.REACT_APP_API_TOKEN;
+const BASE_URL = "https://practica-django-fxpz.onrender.com";
+const API_TOKEN = "221a72f73c7aee1c4d00ea16ad712347a53260f1";
 
 export const crearFunko = async (funkoData) => {
   try {
@@ -288,6 +288,51 @@ export const asignarDescuentoAFunko = async (descuentoData) => {
         'Authorization': `Token ${API_TOKEN}`,
       },
       body: JSON.stringify(descuentoData),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { success: true, data };
+    } else {
+      const errorData = await response.json();
+      return { success: false, message: errorData.message };
+    }
+  } catch (error) {
+    return { success: false, message: `Error en la solicitud: ${error.message}` };
+  }
+};
+
+export const obtenerFunkoPorId = async (id) => {
+  try {
+    const response = await fetch(`${BASE_URL}/funkos/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${API_TOKEN}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { success: true, data };
+    } else {
+      const errorData = await response.json();
+      return { success: false, message: errorData.message };
+    }
+  } catch (error) {
+    return { success: false, message: `Error en la solicitud: ${error.message}` };
+  }
+};
+
+export const actualizarFunko = async (id, funkoData) => {
+  try {
+    const response = await fetch(`${BASE_URL}/funkos/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${API_TOKEN}`,
+      },
+      body: JSON.stringify(funkoData),
     });
 
     if (response.ok) {

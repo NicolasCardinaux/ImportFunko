@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { listarFunkos, listarCategorias, eliminarFunko } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
+import '../styles/list.css';
+
 
 const ListarFunkos = () => {
   const [funkos, setFunkos] = useState([]);
@@ -9,6 +12,8 @@ const ListarFunkos = () => {
   const [error, setError] = useState(null);
   const [eliminando, setEliminando] = useState(false);
   const [idEliminando, setIdEliminando] = useState(null);
+
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
@@ -82,6 +87,10 @@ const ListarFunkos = () => {
       }
     };
 
+    const handleEditar = (idFunko) => {
+      navigate(`/editar-funko/${idFunko}`);
+    };
+
   return (
     <div className="listar">
       <h2>Listar Funkos</h2>
@@ -147,20 +156,38 @@ const ListarFunkos = () => {
                     {eliminando && idEliminando === funko.idFunko ? (
                       <span>Eliminando...</span>
                     ) : (
-                      <button
-                        onClick={() => handleEliminar(funko.idFunko)}
-                        className="btn-eliminar"
-                        title="Eliminar Funko"
-                        disabled={eliminando}
-                      >
-                        <svg
-                          className="icono-basura"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
+                      <div className="acciones-botones">
+                        <button
+                          onClick={() => handleEditar(funko.idFunko)}
+                          className="btn-editar"
+                          title="Editar Funko"
+                          disabled={eliminando}
                         >
-                          <path d="M3 6v18h18v-18h-18zm5 14c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm4-18v2h-20v-2h5.711c.9 0 1.631-1.099 1.631-2h5.315c0 .901.73 2 1.631 2h5.712z" />
-                        </svg>
-                      </button>
+                          <svg
+                            className="icono-editar"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            width="18"
+                            height="18"
+                          >
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleEliminar(funko.idFunko)}
+                          className="btn-eliminar"
+                          title="Eliminar Funko"
+                          disabled={eliminando}
+                        >
+                          <svg
+                            className="icono-basura"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M3 6v18h18v-18h-18zm5 14c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm4-18v2h-20v-2h5.711c.9 0 1.631-1.099 1.631-2h5.315c0 .901.73 2 1.631 2h5.712z" />
+                          </svg>
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

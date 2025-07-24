@@ -8,31 +8,32 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
+    const isStaff = localStorage.getItem("isStaff") === "true";
     const lastActivity = localStorage.getItem("lastActivity");
 
-   
     if (lastActivity && Date.now() - parseInt(lastActivity, 10) > FIVE_DAYS_MS) {
       localStorage.clear();
       return null;
     }
 
-    return token && userId ? { token, userId } : null;
+    return token && userId ? { token, userId, isStaff } : null;
   });
 
   useEffect(() => {
     if (user) {
       localStorage.setItem("token", user.token);
       localStorage.setItem("userId", user.userId);
+      localStorage.setItem("isStaff", user.isStaff);
       localStorage.setItem("sessionStarted", "true");
-      localStorage.setItem("lastActivity", Date.now().toString()); 
+      localStorage.setItem("lastActivity", Date.now().toString());
     } else {
       localStorage.removeItem("token");
       localStorage.removeItem("userId");
+      localStorage.removeItem("isStaff");
       localStorage.removeItem("sessionStarted");
       localStorage.removeItem("lastActivity");
     }
   }, [user]);
-
 
   useEffect(() => {
     const updateLastActivity = () => {
@@ -54,7 +55,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData) => {
     const sessionStarted = localStorage.getItem("sessionStarted");
-    if (sessionStarted) return; 
+    if (sessionStarted) return;
     setUser(userData);
   };
 

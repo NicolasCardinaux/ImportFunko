@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listarVentas } from '../utils/api';
+import '../styles/list.css';
 
 const ListarVentas = () => {
     const [ventas, setVentas] = useState([]);

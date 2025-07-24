@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listarCategorias, eliminarCategoria } from "../utils/api";
+import '../styles/list.css';
 
 const ListarCategorias = () => {
 

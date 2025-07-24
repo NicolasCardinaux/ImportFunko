@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { asignarDescuentoAFunko, crearFunko, listarCategorias, listarDescuentos, subirImagen } from '../utils/api';
+import '../styles/form.css';
 
 const CrearFunko = () => {
   const [categorias, setCategorias] = useState([]);
@@ -15,10 +16,44 @@ const CrearFunko = () => {
     imagen: null,
     categoría: []
   });
-
   const [imagenArchivo, setImagenArchivo] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const result = await listarCategorias();
+
+        if (result.success) {
+          setCategorias(result.data.Categorias || []);
+        } else {
+          console.error("Error al obtener categorías:", result.message);
+          setCategorias([]);
+        }
+      } catch (error) {
+        console.error("Error en la petición:", error);
+        setCategorias([]);
+      }
+    };
+
+    const fetchDescuentos = async () => {
+      try {
+        const result = await listarDescuentos();
+
+        if (result.success) {
+          setDescuentos(result.data.Descuentos || []);
+        } else {
+          console.error("Error al obtener descuentos:", result.message);
+        }
+      } catch (error) {
+        console.error("Error en la petición:", error);
+      }
+    };
+
+    fetchCategorias();
+    fetchDescuentos();
+  }, []);
 
   const handleImagenChange = (e) => {
     const archivo = e.target.files[0];
@@ -143,41 +178,6 @@ const CrearFunko = () => {
       }
   };
 
-  useEffect(() => {
-    const fetchCategorias = async () => {
-      try {
-        const result = await listarCategorias();
-
-        if (result.success) {
-          setCategorias(result.data.Categorias || []);
-        } else {
-          console.error("Error al obtener categorías:", result.message);
-          setCategorias([]);
-        }
-      } catch (error) {
-        console.error("Error en la petición:", error);
-        setCategorias([]);
-      }
-    };
-
-    const fetchDescuentos = async () => {
-      try {
-        const result = await listarDescuentos();
-
-        if (result.success) {
-          setDescuentos(result.data.Descuentos || []);
-        } else {
-          console.error("Error al obtener descuentos:", result.message);
-        }
-      } catch (error) {
-        console.error("Error en la petición:", error);
-      }
-    };
-
-    fetchCategorias();
-    fetchDescuentos();
-  }, []);
-
   return (
     <div className="crear-container">
       <h2>Crear Funko</h2>
@@ -221,6 +221,8 @@ const CrearFunko = () => {
             name="precio"
             value={funko.precio}
             onChange={handleChange}
+            min="0"
+            step="0.01"
             required
           />
         </div>
@@ -256,6 +258,7 @@ const CrearFunko = () => {
         <div className="form-group">
           <label>Imagen:</label>
           <input
+            id="imagen"
             type="file"
             accept="image/*"
             onChange={handleImagenChange}

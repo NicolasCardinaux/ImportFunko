@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { buscarCodigoPostal } from '../data/locaciones';
 import "../index.css";
 
-// --- Constantes de cálculo de envío integradas ---
+
 const ORIGIN_LAT = -32.4847;
 const ORIGIN_LON = -58.2329;
 const PRICE_PER_KM = 10;
@@ -64,12 +64,11 @@ const CheckoutPage = () => {
     return () => {
       const existingScript = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
       if (existingScript) {
-        // Opcional: remover el script si no se usa en otro lado
       }
     };
   }, []);
 
-  // Función para normalizar strings
+
   const normalizeString = (str) => {
     return str
       .toLowerCase()
@@ -77,7 +76,7 @@ const CheckoutPage = () => {
       .replace(/[\u0300-\u036f]/g, '');
   };
 
-  // Función para obtener el porcentaje de descuento
+
   const getDiscountPercentage = (productId) => {
     const funkoDiscount = funkoDiscounts.find((discount) => discount.funko === productId);
     if (!funkoDiscount) return null;
@@ -86,14 +85,14 @@ const CheckoutPage = () => {
     return discountData ? discountData.porcentaje : null;
   };
 
-  // Función para obtener el precio con descuento
+
   const getDiscountedPrice = (productId, originalPrice) => {
     const discountPercentage = getDiscountPercentage(productId);
     if (!discountPercentage) return originalPrice;
     return (originalPrice * (1 - discountPercentage / 100)).toFixed(2);
   };
 
-  // Obtener provincias de Argentina
+
   useEffect(() => {
     const obtenerProvincias = async () => {
       setCargandoProvincias(true);
@@ -111,7 +110,7 @@ const CheckoutPage = () => {
     obtenerProvincias();
   }, []);
 
-  // Obtener ciudades cuando se selecciona una provincia
+
   useEffect(() => {
     if (form.provincia) {
       const obtenerCiudades = async () => {
@@ -136,7 +135,7 @@ const CheckoutPage = () => {
     }
   }, [form.provincia]);
 
-  // Obtener descuentos
+
   useEffect(() => {
     fetch("https://practica-django-fxpz.onrender.com/funkodescuentos")
       .then((response) => response.json())
@@ -153,7 +152,7 @@ const CheckoutPage = () => {
       .catch(console.error);
   }, []);
 
-  // Obtener carrito del usuario (refactorizado)
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
@@ -231,13 +230,13 @@ const CheckoutPage = () => {
     if (user) fetchCart();
   }, [quantities, user]);
   
-  // Manejo del cambio en los inputs
+
   const handleChange = (e) => {
     setFormError("");
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Manejo del input de ciudad con sugerencias
+
   const handleCiudadInput = (e) => {
     const value = e.target.value;
     setCiudadInput(value);
@@ -253,7 +252,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Seleccionar ciudad y obtener código postal automáticamente
+
   const seleccionarCiudad = (nombre) => {
     setCiudadInput(nombre);
     setSugerencias([]);
@@ -270,7 +269,7 @@ const CheckoutPage = () => {
     setIsLoadingPostalCode(false);
   };
 
-  // Validar formulario
+
   const validarFormulario = () => {
     const { provincia, ciudad, calle, numero, codigoPostal, telefono, email } = form;
     if (!provincia || !ciudad || !calle || !numero || !codigoPostal || !telefono || !email) {
@@ -292,7 +291,7 @@ const CheckoutPage = () => {
     return true;
   };
 
-  // Calcular envío usando la API de OpenCage
+
   const calcularEnvio = async () => {
     if (!validarFormulario()) return;
 
@@ -348,7 +347,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Confirmar compra
+
   const confirmarCompra = async () => {
     if (!isMpScriptLoaded) {
       setFormError("El método de pago aún está cargando. Por favor, espere un momento.");
