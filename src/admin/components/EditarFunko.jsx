@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { obtenerFunkoPorId, actualizarFunko, listarCategorias, listarDescuentos, subirImagen, asignarDescuentoAFunko } from "../utils/api";
+import '../styles/list.css';
 
 const EditarFunko = () => {
   const { id } = useParams();
@@ -46,13 +47,8 @@ const EditarFunko = () => {
         }
 
         const funkoResult = await obtenerFunkoPorId(id);
-        // console.log("Datos del funko recibidos:", funkoResult);
         if (funkoResult.success) {
           const funkoData = funkoResult.data.Funko || funkoResult.data;
-          // const categoriasFunko = funkoData.categoría || [];
-
-          // console.log("Datos del funko para edición:", funkoData);
-
           setFunko({
             nombre: funkoData.nombre || "",
             descripción: funkoData.descripción || "",
@@ -127,15 +123,12 @@ const EditarFunko = () => {
     e.preventDefault();
     setError(null);
 
-    // console.log("Estado actual del funko:", funko);
-
     let idImagen = funko.imagen;
 
     if (imagenArchivo) {
       const resultado = await subirImagen(imagenArchivo);
       if (resultado.success) {
         idImagen = resultado.data.idImagen;
-        // console.log("Nueva imagen subida. ID:", idImagen);
       } else {
         alert(`Error al subir imagen: ${resultado.message}`);
         return;
@@ -152,8 +145,6 @@ const EditarFunko = () => {
       categoría: funko.categoría.map((id) => Number(id)),
     };
 
-    // console.log("Datos a enviar para actualización:", datosParaEnviar);
-
     if (descuentoSeleccionado) {
       const hoy = new Date();
       const fechaSeleccionada = new Date(fechaExpiracion);
@@ -166,7 +157,6 @@ const EditarFunko = () => {
 
     try {
       const resultadoActualizacion = await actualizarFunko(id, datosParaEnviar);
-      // console.log("Respuesta de actualización:", resultadoActualizacion);
       if (resultadoActualizacion.success) {
         if (descuentoSeleccionado) {
           if (
@@ -179,7 +169,7 @@ const EditarFunko = () => {
               fecha_inicio: new Date().toISOString().split("T")[0],
               fecha_expiracion: fechaExpiracion,
             };
-  
+
             const resultadoDescuento = await asignarDescuentoAFunko(
               descuentoData
             );
@@ -194,13 +184,11 @@ const EditarFunko = () => {
             }
           }
         } else if (descuentoActual) {
-          // Si se quitó el descuento pero había uno activo, deberia eliminar el descuento.
-          // esto solo avisa pero no hace nada (hacer despues)
           console.log("Se quitó el descuento existente");
         }
-  
+
         alert("Funko actualizado exitosamente!");
-        navigate("/listar-funkos");
+        navigate("/admin/listar-funkos"); // Añadimos el prefijo /admin
       } else {
         const errorMsg = resultadoActualizacion.message || resultadoActualizacion.error || "Error desconocido al actualizar";
         alert(`Error al actualizar funko: ${errorMsg}`);
@@ -370,7 +358,7 @@ const EditarFunko = () => {
           <button
             type="button"
             className="btn-cancelar"
-            onClick={() => navigate("/listar-funkos")}
+            onClick={() => navigate("/admin/listar-funkos")}
           >
             Cancelar
           </button>

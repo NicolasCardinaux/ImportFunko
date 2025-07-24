@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react';
-import { listarFunkos, listarCategorias, eliminarFunko } from '../utils/api';
-import { useNavigate } from 'react-router-dom';
-import '../styles/list.css';
-
+import { useEffect, useState } from "react";
+import { listarFunkos, listarCategorias, eliminarFunko } from "../utils/api";
+import { useNavigate } from "react-router-dom";
+import "../styles/list.css";
 
 const ListarFunkos = () => {
   const [funkos, setFunkos] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [catSeleccionada, setCatSeleccionada] = useState('');
+  const [catSeleccionada, setCatSeleccionada] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState(null);
   const [eliminando, setEliminando] = useState(false);
@@ -52,11 +51,13 @@ const ListarFunkos = () => {
   };
 
   const funkosFiltrados = funkos.filter((funko) => {
-
-    const coincideNombre = funko.nombre.toLowerCase().includes(busqueda.toLowerCase());
-
+    const coincideNombre = funko.nombre
+      .toLowerCase()
+      .includes(busqueda.toLowerCase());
     const categoriaFunko = funko.categoría[0]?.idCategoria;
-    const coincideCategoria = !catSeleccionada || (categoriaFunko && categoriaFunko.toString() === catSeleccionada);
+    const coincideCategoria =
+      !catSeleccionada ||
+      (categoriaFunko && categoriaFunko.toString() === catSeleccionada);
 
     return coincideNombre && coincideCategoria;
   });
@@ -70,7 +71,9 @@ const ListarFunkos = () => {
         const result = await eliminarFunko(idFunko);
 
         if (result.success) {
-          setFunkos(prevFunkos => prevFunkos.filter(funko => funko.idFunko !== idFunko));
+          setFunkos((prevFunkos) =>
+            prevFunkos.filter((funko) => funko.idFunko !== idFunko)
+          );
 
           setTimeout(() => {
             fetchData();
@@ -81,15 +84,15 @@ const ListarFunkos = () => {
       } catch (error) {
         setError("Error al eliminar el funko:" + error.message);
       } finally {
-          setEliminando(false);
-          setIdEliminando(null);
-        }
+        setEliminando(false);
+        setIdEliminando(null);
       }
-    };
+    }
+  };
 
-    const handleEditar = (idFunko) => {
-      navigate(`/editar-funko/${idFunko}`);
-    };
+  const handleEditar = (idFunko) => {
+    navigate(`/admin/editar-funko/${idFunko}`); // Corregido a /admin/editar-funko/:id
+  };
 
   return (
     <div className="listar">
@@ -170,7 +173,7 @@ const ListarFunkos = () => {
                             width="18"
                             height="18"
                           >
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                           </svg>
                         </button>
                         <button
