@@ -30,8 +30,9 @@ const SocialLogin = () => {
     });
 
     if (error) {
-      // Si hay un error, redirige a /register con el mensaje de error
-      const errorMessage = error.includes("duplicate key value violates unique constraint")
+      // Estandarizar el mensaje de error
+      const errorMessage = error.includes("duplicate key value violates unique constraint") ||
+                          error.includes("duplicate_username")
         ? "Ya existe un usuario con ese nombre. Por favor, elige otro nombre de usuario."
         : "Error en la autenticación. Por favor, intenta de nuevo.";
       navigate(`/register?error=${encodeURIComponent(errorMessage)}`, { replace: true });

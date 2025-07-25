@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Agregado useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../css/style.css";
 import logo from "../assets/log.png";
@@ -24,7 +24,7 @@ const getCsrfTokenFromCookies = () => {
 
 const Register = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Para leer parámetros de la URL
+  const location = useLocation();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -33,7 +33,7 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Estado para el mensaje de error
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Detectar parámetro de error en la URL
   useEffect(() => {
@@ -41,7 +41,6 @@ const Register = () => {
     const error = params.get("error");
     if (error) {
       setErrorMessage(decodeURIComponent(error));
-      // Limpiar el parámetro de error de la URL
       navigate("/register", { replace: true });
     }
   }, [location, navigate]);
@@ -176,7 +175,7 @@ const Register = () => {
       });
     } else {
       console.error("Google SDK no está cargado.");
-      alert("Error al cargar Google Sign-In. Por favor, intenta de nuevo.");
+      setErrorMessage("Error al cargar Google Sign-In. Por favor, intenta de nuevo.");
     }
   };
 
@@ -208,7 +207,14 @@ const Register = () => {
           login(userData);
           navigate("/login");
         } else {
-          setErrorMessage("Error al registrarse con Google: " + (data.error || "Error desconocido"));
+          const errorMsg = data.error || "Error desconocido";
+          // Estandarizar mensaje de error para nombre de usuario duplicado
+          if (errorMsg.includes("duplicate key value violates unique constraint") ||
+              errorMsg.includes("duplicate_username")) {
+            setErrorMessage("Ya existe un usuario con ese nombre. Por favor, elige otro nombre de usuario.");
+          } else {
+            setErrorMessage("Error al registrarse con Google: " + errorMsg);
+          }
         }
       })
       .catch((error) => {
