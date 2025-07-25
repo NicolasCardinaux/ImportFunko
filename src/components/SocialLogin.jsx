@@ -13,8 +13,6 @@ const SocialLogin = () => {
     const userId = params.get("userId");
     const isStaff = params.get("isStaff") === "true";
 
-    console.log("Parámetros recibidos en SocialLogin:", { token, userId, isStaff });
-
     if (token && userId) {
       // Normalizar el token (eliminar "Token object (...)" si el backend lo envía mal)
       const cleanToken = token.replace("Token object (", "").replace(")", "").trim() || token;
@@ -25,19 +23,19 @@ const SocialLogin = () => {
         isStaff,
       };
 
-      // Guardar en localStorage y contexto
+      // Guardar en localStorage
       localStorage.setItem("token", userData.token);
       localStorage.setItem("userId", userData.userId);
       localStorage.setItem("isStaff", userData.isStaff);
+
+      // Llamar a login para actualizar el contexto
       login(userData);
-      console.log("Datos guardados en localStorage:", userData);
 
       // Redirigir solo después de un pequeño retraso para evitar conflictos de navegación
       setTimeout(() => {
         const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
         sessionStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath, { replace: true });
-        console.log("Redirigiendo a:", redirectPath);
       }, 100); // Retraso de 100ms para evitar throttling
     } else {
       console.error("Faltan parámetros en la URL:", location.search);
