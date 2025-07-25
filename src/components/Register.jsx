@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Añadimos useLocation
 import "../css/style.css";
 import logo from "../assets/log.png";
 import eyeIcon from "../assets/eye.png";
@@ -23,6 +23,7 @@ const getCsrfTokenFromCookies = () => {
 
 const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Para acceder a los parámetros de la URL
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -72,8 +73,25 @@ const Register = () => {
     loadGoogleScript();
     loadFacebookScript();
 
+    // Manejo de callbacks
+    const urlParams = new URLSearchParams(location.search);
+    const code = urlParams.get("code"); // Para GitHub
+    const oauthToken = urlParams.get("oauth_token"); // Para Twitter
+    const oauthVerifier = urlParams.get("oauth_verifier"); // Para Twitter
+    const errorIntegridad = urlParams.get("errorIntegridad");
+
+    if (code) {
+      handleGitHubCallback(code);
+    }
+    if (oauthToken && oauthVerifier) {
+      sendTwitterToken(oauthToken, oauthVerifier);
+    }
+    if (errorIntegridad) {
+      alert("Ya existe una cuenta con estas credenciales.");
+    }
+
     return () => {};
-  }, []);
+  }, [location.search]); // Añadimos location.search como dependencia
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -219,6 +237,43 @@ const Register = () => {
     }
   };
 
+  const handleGitHubCallback = async (code) => {
+    try {
+      const response = await fetch("https://practica-django-fxpz.onrender.com/auth/github/callback/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await response.json();
+      console.log("Respuesta completa de GitHub callback:", data);
+      if (data.success) {
+        let userId;
+        if (data.idUsuario) {
+          userId = data.idUsuario;
+        } else if (data.usuario && data.usuario.idUsuario) {
+          userId = data.usuario.idUsuario;
+        } else {
+          throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
+        }
+        alert("Registro exitoso con GitHub.");
+        const userData = {
+          token: data.token,
+          userId,
+          isStaff: data.is_staff ?? data.usuario?.is_staff ?? false,
+        };
+        localStorage.setItem("token", userData.token);
+        localStorage.setItem("userId", userData.userId);
+        localStorage.setItem("isStaff", userData.isStaff);
+        navigate("/login");
+      } else {
+        alert("Error en la autenticación con GitHub: " + (data.error || "Error desconocido"));
+      }
+    } catch (error) {
+      console.error("Error en el callback de GitHub:", error);
+      alert("Error al autenticar con GitHub.");
+    }
+  };
+
   const sendTwitterToken = async (oauthToken, oauthVerifier) => {
     try {
       const response = await fetch("https://practica-django-fxpz.onrender.com/auth/twitter/callback", {
@@ -261,20 +316,6 @@ const Register = () => {
       alert("Error al iniciar autenticación con Twitter.");
     }
   };
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const oauthToken = urlParams.get("oauth_token");
-    const oauthVerifier = urlParams.get("oauth_verifier");
-    const errorIntegridad = urlParams.get("errorIntegridad");
-
-    if (oauthToken && oauthVerifier) {
-      sendTwitterToken(oauthToken, oauthVerifier);
-    }
-    if (errorIntegridad) {
-      alert("Ya existe una cuenta con estas credenciales.");
-    }
-  }, []);
 
   return (
     <div className="auth-container">

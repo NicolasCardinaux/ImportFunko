@@ -49,7 +49,8 @@ function AppContent() {
       location.pathname !== "/login" &&
       location.pathname !== "/register" &&
       location.pathname !== "/quienes-somos" &&
-      !location.pathname.startsWith("/product/")
+      !location.pathname.startsWith("/product/") &&
+      !location.pathname.startsWith("/auth/")
     ) {
       navigate("/", { replace: true });
     } else if (isAuthenticated && location.pathname === "/login") {
@@ -135,6 +136,8 @@ function AppContent() {
             <Route path="/mis-datos" element={<AccountPage />} />
             <Route path="/thank-you" element={<ThankYouComponent />} />
             <Route path="/rejected" element={<RejectedPurchaseComponent />} />
+            <Route path="/auth/github/callback" element={<Login />} /> {/* Nueva ruta para GitHub */}
+            <Route path="/auth/twitter/callback" element={<Login />} /> {/* Nueva ruta para Twitter */}
             <Route
               path="/admin/*"
               element={
