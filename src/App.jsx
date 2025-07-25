@@ -42,20 +42,22 @@ function AppContent() {
   const [currentCount, setCurrentCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, setAuth } = useAuth();
+  const { isAuthenticated, user, setUserAuth } = useAuth();
 
-  // Inicializar autenticación desde localStorage sin validación
+  // Inicializar autenticación desde localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
     const isStaff = localStorage.getItem("isStaff") === "true";
+    console.log("Inicializando autenticación:", { token, userId, isStaff });
     if (token && userId) {
-      setAuth({ isAuthenticated: true, user: { idUsuario: userId, is_staff: isStaff } });
+      setUserAuth({ token, userId, isStaff });
     }
-  }, [setAuth]);
+  }, [setUserAuth]);
 
   // Handle redirection for protected routes
   useEffect(() => {
+    console.log("Redirección chequeada:", { isAuthenticated, pathname: location.pathname });
     if (
       !isAuthenticated &&
       !["/login", "/register", "/quienes-somos", "/"].some((path) =>
@@ -80,11 +82,12 @@ function AppContent() {
       fetch(`https://practica-django-fxpz.onrender.com/auth/github/callback/?code=${githubCode}`)
         .then((res) => res.json())
         .then((data) => {
+          console.log("Respuesta GitHub:", data);
           if (data.success) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("userId", data.idUsuario || (data.usuario && data.usuario.idUsuario));
             localStorage.setItem("isStaff", data.is_staff || (data.usuario && data.usuario.is_staff) || false);
-            setAuth({ isAuthenticated: true, user: { idUsuario: data.idUsuario || (data.usuario && data.usuario.idUsuario), is_staff: data.is_staff || (data.usuario && data.usuario.is_staff) || false } });
+            setUserAuth({ token: data.token, userId: data.idUsuario || (data.usuario && data.usuario.idUsuario), isStaff: data.is_staff || (data.usuario && data.usuario.is_staff) || false });
             navigate("/", { replace: true });
           } else {
             console.error("GitHub login failed:", data.error || "Unknown error");
@@ -105,11 +108,12 @@ function AppContent() {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log("Respuesta Twitter:", data);
           if (data.success) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("userId", data.idUsuario || (data.usuario && data.usuario.idUsuario));
             localStorage.setItem("isStaff", data.is_staff || (data.usuario && data.usuario.is_staff) || false);
-            setAuth({ isAuthenticated: true, user: { idUsuario: data.idUsuario || (data.usuario && data.usuario.idUsuario), is_staff: data.is_staff || (data.usuario && data.usuario.is_staff) || false } });
+            setUserAuth({ token: data.token, userId: data.idUsuario || (data.usuario && data.usuario.idUsuario), isStaff: data.is_staff || (data.usuario && data.usuario.is_staff) || false });
             navigate("/", { replace: true });
           } else {
             console.error("Twitter login failed:", data.error || "Unknown error");
@@ -121,7 +125,7 @@ function AppContent() {
           alert("Error al iniciar sesión con Twitter.");
         });
     }
-  }, [navigate, setAuth]);
+  }, [navigate, setUserAuth]);
 
   // Sync filters with URL query params
   useEffect(() => {
@@ -146,7 +150,7 @@ function AppContent() {
   const isAdminPage = location.pathname.startsWith("/admin");
 
   const AdminRoute = ({ children }) => {
-    if (user?.is_staff) {
+    if (user?.isStaff) {
       return children;
     }
     return (

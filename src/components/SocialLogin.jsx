@@ -13,8 +13,9 @@ const SocialLogin = () => {
     const userId = params.get("userId");
     const isStaff = params.get("isStaff") === "true";
 
+    console.log("Parámetros recibidos en SocialLogin:", { token, userId, isStaff });
+
     if (token && userId) {
-      // Normalizar el token (eliminar "Token object (...)" si el backend lo envía mal)
       const cleanToken = token.replace("Token object (", "").replace(")", "").trim() || token;
 
       const userData = {
@@ -23,27 +24,25 @@ const SocialLogin = () => {
         isStaff,
       };
 
-      // Guardar en localStorage
       localStorage.setItem("token", userData.token);
       localStorage.setItem("userId", userData.userId);
       localStorage.setItem("isStaff", userData.isStaff);
-
-      // Llamar a login para actualizar el contexto
       login(userData);
+      console.log("Datos guardados en localStorage:", userData);
 
-      // Redirigir solo después de un pequeño retraso para evitar conflictos de navegación
       setTimeout(() => {
         const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
         sessionStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath, { replace: true });
-      }, 100); // Retraso de 100ms para evitar throttling
+        console.log("Redirigiendo a:", redirectPath);
+      }, 100);
     } else {
       console.error("Faltan parámetros en la URL:", location.search);
-      navigate("/login", { replace: true }); // Redirigir con replace para evitar historial
+      navigate("/login", { replace: true });
     }
   }, [navigate, location, login]);
 
-  return <div>Loading...</div>; // Loader mientras procesa
+  return <div>Loading...</div>;
 };
 
 export default SocialLogin;

@@ -19,25 +19,6 @@ export const AuthProvider = ({ children }) => {
     return token && userId ? { token, userId, isStaff } : null;
   });
 
-  // Validar token al montar
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetch("https://practica-django-fxpz.onrender.com/auth/validate", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.user) {
-            setUser({ token, userId: localStorage.getItem("userId"), isStaff: localStorage.getItem("isStaff") === "true" });
-          } else {
-            logout();
-          }
-        })
-        .catch(() => logout());
-    }
-  }, []);
-
   // Sincronizar con localStorage
   useEffect(() => {
     try {
@@ -87,10 +68,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const setUserAuth = (userData) => {
+    setUser(userData);
+  };
+
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, setUserAuth }}>
       {children}
     </AuthContext.Provider>
   );
