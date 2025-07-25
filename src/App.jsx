@@ -24,7 +24,7 @@ import AccountPage from "./components/AccountPage";
 import ThankYouComponent from "./components/ThankYouComponent";
 import RejectedPurchaseComponent from "./components/RejectedPurchaseComponent";
 import AdminLayout from "./admin/AdminLayout";
-import SocialLogin from "./components/SocialLogin"; // Importar el nuevo componente
+import SocialLogin from "./components/SocialLogin";
 import { useAuth } from "./context/AuthContext";
 
 function App() {
@@ -44,39 +44,27 @@ function AppContent() {
   const navigate = useNavigate();
   const { isAuthenticated, user, setAuth } = useAuth();
 
-  // Validate token from localStorage on mount
+  // Inicializar autenticación desde localStorage sin validación en el backend
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
+    const isStaff = localStorage.getItem("isStaff") === "true";
     if (token && userId) {
-      fetch("https://practica-django-fxpz.onrender.com/auth/validate", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.user) {
-            setAuth({ isAuthenticated: true, user: data.user });
-          } else {
-            localStorage.removeItem("token");
-            localStorage.removeItem("userId");
-            setAuth({ isAuthenticated: false, user: null });
-          }
-        })
-        .catch(() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-          setAuth({ isAuthenticated: false, user: null });
-        });
+      setAuth({ isAuthenticated: true, user: { idUsuario: userId, is_staff: isStaff } });
+    } else {
+      setAuth({ isAuthenticated: false, user: null });
     }
   }, [setAuth]);
 
-  // Handle redirection for protected routes
+  // Handle redirection for protected routes with debounce-like logic
   useEffect(() => {
+    // Prevent infinite loops by checking current pathname
     if (
       !isAuthenticated &&
       !["/login", "/register", "/quienes-somos", "/"].some((path) =>
         location.pathname === path || location.pathname.startsWith("/product/")
-      )
+      ) &&
+      location.pathname !== "/social-login" // Avoid redirecting during social login
     ) {
       navigate("/login", { replace: true });
     } else if (isAuthenticated && location.pathname === "/login") {
@@ -93,7 +81,10 @@ function AppContent() {
 
     if (githubCode) {
       fetch(`https://practica-django-fxpz.onrender.com/auth/github/callback/?code=${githubCode}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("GitHub callback failed");
+          return res.json();
+        })
         .then((data) => {
           if (data.success) {
             localStorage.setItem("token", data.token);
@@ -112,15 +103,15 @@ function AppContent() {
     }
 
     if (oauthToken && oauthVerifier) {
-      fetch(
-        `https://practica-django-fxpz.onrender.com/auth/twitter/callback`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
-        }
-      )
-        .then((res) => res.json())
+      fetch("https://practica-django-fxpz.onrender.com/auth/twitter/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Twitter callback failed");
+          return res.json();
+        })
         .then((data) => {
           if (data.success) {
             localStorage.setItem("token", data.token);
@@ -163,7 +154,7 @@ function AppContent() {
 
   // Enhanced AdminRoute with unauthorized message
   const AdminRoute = ({ children }) => {
-    if (user?.isStaff) {
+    if (user?.is_staff) {
       return children;
     }
     return (
@@ -233,7 +224,7 @@ function AppContent() {
             <Route path="/gracias" element={<PrivateRoute><ThankYouComponent /></PrivateRoute>} />
             <Route path="/rechazado" element={<PrivateRoute><RejectedPurchaseComponent /></PrivateRoute>} />
             <Route path="/admin/*" element={<AdminRoute><AdminLayout /></AdminRoute>} />
-            <Route path="/social-login" element={<SocialLogin />} /> {/* Nueva ruta para social login */}
+            <Route path="/social-login" element={<SocialLogin />} />
           </Routes>
         </main>
         {!isAuthPage && !isAdminPage && <Footer />}

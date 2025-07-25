@@ -23,22 +23,27 @@ const SocialLogin = () => {
         isStaff,
       };
 
-      // Guardar en localStorage y contexto
+      // Guardar en localStorage
       localStorage.setItem("token", userData.token);
       localStorage.setItem("userId", userData.userId);
       localStorage.setItem("isStaff", userData.isStaff);
+
+      // Llamar a login para actualizar el contexto
       login(userData);
 
-      // Redirigir al home o ruta deseada
-      const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
-      sessionStorage.removeItem("redirectAfterLogin");
-      navigate(redirectPath);
+      // Redirigir solo después de un pequeño retraso para evitar conflictos de navegación
+      setTimeout(() => {
+        const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
+        sessionStorage.removeItem("redirectAfterLogin");
+        navigate(redirectPath, { replace: true });
+      }, 100); // Retraso de 100ms para evitar throttling
     } else {
-      navigate("/login"); // Redirigir a login si faltan parámetros
+      console.error("Faltan parámetros en la URL:", location.search);
+      navigate("/login", { replace: true }); // Redirigir con replace para evitar historial
     }
   }, [navigate, location, login]);
 
-  return <div>Loading...</div>; // Opcional: un loader mientras procesa
+  return <div>Loading...</div>; // Loader mientras procesa
 };
 
 export default SocialLogin;
