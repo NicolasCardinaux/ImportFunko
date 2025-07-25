@@ -12,8 +12,10 @@ const SocialLogin = () => {
     const token = params.get("token");
     const userId = params.get("userId");
     const isStaff = params.get("isStaff") === "true";
+    const error = params.get("error"); // Captura el parámetro de error
 
     const extractToken = (rawToken) => {
+      if (!rawToken) return null; // Evita el error si rawToken es null
       const match = rawToken.match(/\(([^)]+)\)/);
       return match ? match[1] : rawToken;
     };
@@ -24,7 +26,17 @@ const SocialLogin = () => {
       token: cleanToken,
       userId,
       isStaff,
+      error,
     });
+
+    if (error) {
+      // Si hay un error, redirige a /register con el mensaje de error
+      const errorMessage = error.includes("duplicate key value violates unique constraint")
+        ? "Ya existe un usuario con ese nombre. Por favor, elige otro nombre de usuario."
+        : "Error en la autenticación. Por favor, intenta de nuevo.";
+      navigate(`/register?error=${encodeURIComponent(errorMessage)}`, { replace: true });
+      return;
+    }
 
     if (cleanToken && userId) {
       const userData = {
@@ -47,7 +59,7 @@ const SocialLogin = () => {
       }, 100);
     } else {
       console.error("Faltan parámetros en la URL:", location.search);
-      navigate("/login", { replace: true });
+      navigate(`/register?error=${encodeURIComponent("Error en la autenticación. Por favor, intenta de nuevo.")}`, { replace: true });
     }
   }, [navigate, location, login]);
 

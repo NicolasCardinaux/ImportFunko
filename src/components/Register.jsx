@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Agregado useLocation
 import { useAuth } from "../context/AuthContext";
 import "../css/style.css";
 import logo from "../assets/log.png";
@@ -24,6 +24,7 @@ const getCsrfTokenFromCookies = () => {
 
 const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Para leer parámetros de la URL
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -32,6 +33,18 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // Estado para el mensaje de error
+
+  // Detectar parámetro de error en la URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const error = params.get("error");
+    if (error) {
+      setErrorMessage(decodeURIComponent(error));
+      // Limpiar el parámetro de error de la URL
+      navigate("/register", { replace: true });
+    }
+  }, [location, navigate]);
 
   const togglePasswordVisibility = (field) => {
     if (field === "password") setShowPassword(!showPassword);
@@ -81,29 +94,29 @@ const Register = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Las contraseñas no coinciden.");
+      setErrorMessage("Las contraseñas no coinciden.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      alert("Por favor, ingresa un correo electrónico válido.");
+      setErrorMessage("Por favor, ingresa un correo electrónico válido.");
       return;
     }
 
     if (username.length < 3) {
-      alert("El nombre de usuario debe tener al menos 3 caracteres.");
+      setErrorMessage("El nombre de usuario debe tener al menos 3 caracteres.");
       return;
     }
 
     if (password.length < 6) {
-      alert("La contraseña debe tener al menos 6 caracteres.");
+      setErrorMessage("La contraseña debe tener al menos 6 caracteres.");
       return;
     }
 
     const phoneRegex = /^\+54\d{5}\d{6}$/;
     if (telefono && !phoneRegex.test(telefono)) {
-      alert("El número de contacto debe estar en el formato: +54 seguido de 5 dígitos de código de área y 6 dígitos de número de teléfono.");
+      setErrorMessage("El número de contacto debe estar en el formato: +54 seguido de 5 dígitos de código de área y 6 dígitos de número de teléfono.");
       return;
     }
 
@@ -132,15 +145,15 @@ const Register = () => {
         login({ token: responseData.token, userId: responseData.idUsuario || (responseData.Usuario && responseData.Usuario.idUsuario) });
         navigate("/login");
       } else if (response.status === 409) {
-        throw new Error("El correo o nombre de usuario ya existe.");
+        setErrorMessage("El correo o nombre de usuario ya existe.");
       } else {
         const errorData = await response.json();
         console.log("Respuesta de error del servidor:", errorData);
-        throw new Error(errorData.detail || "Error en la creación del usuario");
+        setErrorMessage(errorData.detail || "Error en la creación del usuario.");
       }
     } catch (error) {
       console.error("Error al registrar el usuario:", error);
-      alert(error.message || "Hubo un problema al registrar el usuario.");
+      setErrorMessage(error.message || "Hubo un problema al registrar el usuario.");
     }
   };
 
@@ -195,12 +208,12 @@ const Register = () => {
           login(userData);
           navigate("/login");
         } else {
-          alert("Error al registrarse con Google: " + (data.error || "Error desconocido"));
+          setErrorMessage("Error al registrarse con Google: " + (data.error || "Error desconocido"));
         }
       })
       .catch((error) => {
         console.error("Error en el registro con Google:", error);
-        alert("Error al registrarse con Google. Por favor, intenta de nuevo.");
+        setErrorMessage("Error al registrarse con Google. Por favor, intenta de nuevo.");
       });
   };
 
@@ -215,11 +228,11 @@ const Register = () => {
         window.location.href = data.url;
       } else {
         console.error("No se pudo iniciar la autenticación con GitHub");
-        alert("Error al iniciar autenticación con GitHub.");
+        setErrorMessage("Error al iniciar autenticación con GitHub.");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Error al iniciar autenticación con GitHub.");
+      setErrorMessage("Error al iniciar autenticación con GitHub.");
     }
   };
 
@@ -237,11 +250,11 @@ const Register = () => {
       if (data.authorization_url) {
         window.location.href = data.authorization_url;
       } else {
-        alert("No se pudo iniciar la autenticación con Twitter.");
+        setErrorMessage("No se pudo iniciar la autenticación con Twitter.");
       }
     } catch (error) {
       console.error("Error en Twitter login:", error);
-      alert("Error al iniciar autenticación con Twitter.");
+      setErrorMessage("Error al iniciar autenticación con Twitter.");
     }
   };
 
@@ -259,6 +272,11 @@ const Register = () => {
       <div className="container">
         <form id="register-form" className="register-form" onSubmit={handleSubmit}>
           <h2>Regístrate</h2>
+          {errorMessage && (
+            <div className="error-message">
+              {errorMessage}
+            </div>
+          )}
           <input
             type="email"
             id="email"
