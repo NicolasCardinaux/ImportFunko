@@ -144,7 +144,19 @@ const Register = () => {
         login({ token: responseData.token, userId: responseData.idUsuario || (responseData.Usuario && responseData.Usuario.idUsuario) });
         navigate("/login");
       } else if (response.status === 409) {
-        setErrorMessage("El correo o nombre de usuario ya existe.");
+        const errorData = await response.json();
+        console.log("Respuesta de error del servidor:", errorData);
+        if (errorData.detail && errorData.detail.includes("duplicate key value violates unique constraint")) {
+          if (errorData.detail.includes("Usuarios_usuario_email_key")) {
+            setErrorMessage("El correo electrónico ya existe. Por favor, inicia sesión o usa otro correo.");
+          } else if (errorData.detail.includes("Usuarios_usuario_nombre_key")) {
+            setErrorMessage("El nombre de usuario ya existe. Por favor, elige otro nombre de usuario.");
+          } else {
+            setErrorMessage("El correo o nombre de usuario ya existe.");
+          }
+        } else {
+          setErrorMessage(errorData.detail || "El correo o nombre de usuario ya existe.");
+        }
       } else {
         const errorData = await response.json();
         console.log("Respuesta de error del servidor:", errorData);
@@ -152,7 +164,7 @@ const Register = () => {
       }
     } catch (error) {
       console.error("Error al registrar el usuario:", error);
-      setErrorMessage(error.message || "Hubo un problema al registrar el usuario.");
+      setErrorMessage("Hubo un problema al registrar el usuario. Por favor, intenta de nuevo.");
     }
   };
 
@@ -208,10 +220,11 @@ const Register = () => {
           navigate("/login");
         } else {
           const errorMsg = data.error || "Error desconocido";
-          // Estandarizar mensaje de error para nombre de usuario duplicado
           if (errorMsg.includes("duplicate key value violates unique constraint") ||
               errorMsg.includes("duplicate_username")) {
-            setErrorMessage("Ya existe un usuario con ese nombre. Por favor, elige otro nombre de usuario.");
+            setErrorMessage("El nombre de usuario ya existe. Por favor, elige otro nombre de usuario.");
+          } else if (errorMsg.includes("Usuarios_usuario_email_key")) {
+            setErrorMessage("El correo electrónico ya existe. Por favor, inicia sesión o usa otro correo.");
           } else {
             setErrorMessage("Error al registrarse con Google: " + errorMsg);
           }
