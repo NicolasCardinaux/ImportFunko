@@ -19,7 +19,7 @@ const getCsrfTokenFromCookies = () => {
       return cookie.substring(name.length + 1);
     }
   }
-  return null;
+  return "";
 };
 
 const Register = () => {
@@ -73,24 +73,6 @@ const Register = () => {
 
     loadGoogleScript();
     loadFacebookScript();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const oauthToken = urlParams.get("oauth_token");
-    const oauthVerifier = urlParams.get("oauth_verifier");
-    const githubCode = urlParams.get("code");
-    const errorIntegridad = urlParams.get("errorIntegridad");
-
-    if (oauthToken && oauthVerifier) {
-      sendTwitterToken(oauthToken, oauthVerifier);
-    }
-
-    if (githubCode) {
-      sendGitHubCode(githubCode);
-    }
-
-    if (errorIntegridad) {
-      alert("Ya existe una cuenta con estas credenciales.");
-    }
 
     return () => {};
   }, []);
@@ -238,61 +220,6 @@ const Register = () => {
     } catch (error) {
       console.error("Error:", error);
       alert("Error al iniciar autenticación con GitHub.");
-    }
-  };
-
-  const sendGitHubCode = async (code) => {
-    try {
-      const response = await fetch(`https://practica-django-fxpz.onrender.com/auth/github/callback/?code=${code}`);
-      const data = await response.json();
-      console.log("Respuesta completa de GitHub register:", data);
-
-      if (data.success) {
-        alert("Registro exitoso con GitHub.");
-        let userId;
-        if (data.idUsuario) {
-          userId = data.idUsuario;
-        } else if (data.usuario && data.usuario.idUsuario) {
-          userId = data.usuario.idUsuario;
-        } else {
-          throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
-        }
-
-        const userData = { token: data.token, userId };
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userId", userId);
-        login(userData);
-        navigate("/login");
-      } else {
-        alert("Error al registrarse con GitHub: " + (data.error || "Error desconocido"));
-      }
-    } catch (error) {
-      console.error("Error en el registro con GitHub:", error);
-      alert("Error en el registro con GitHub.");
-    }
-  };
-
-  const sendTwitterToken = async (oauthToken, oauthVerifier) => {
-    try {
-      const response = await fetch("https://practica-django-fxpz.onrender.com/auth/twitter/callback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        alert("Inicio de sesión exitoso con Twitter.");
-        const userData = { token: data.token, userId: data.idUsuario || (data.usuario && data.usuario.idUsuario) };
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userId", userData.userId);
-        login(userData);
-        navigate("/");
-      } else {
-        alert("Error en la autenticación: " + (data.error || "Error desconocido"));
-      }
-    } catch (error) {
-      console.error("Error al autenticar con Twitter:", error);
-      alert("Error en la autenticación con Twitter.");
     }
   };
 
