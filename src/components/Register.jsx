@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Añadimos useLocation
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../css/style.css";
 import logo from "../assets/log.png";
 import eyeIcon from "../assets/eye.png";
@@ -23,7 +24,7 @@ const getCsrfTokenFromCookies = () => {
 
 const Register = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Para acceder a los parámetros de la URL
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -73,25 +74,26 @@ const Register = () => {
     loadGoogleScript();
     loadFacebookScript();
 
-    // Manejo de callbacks
-    const urlParams = new URLSearchParams(location.search);
-    const code = urlParams.get("code"); // Para GitHub
-    const oauthToken = urlParams.get("oauth_token"); // Para Twitter
-    const oauthVerifier = urlParams.get("oauth_verifier"); // Para Twitter
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthToken = urlParams.get("oauth_token");
+    const oauthVerifier = urlParams.get("oauth_verifier");
+    const githubCode = urlParams.get("code");
     const errorIntegridad = urlParams.get("errorIntegridad");
 
-    if (code) {
-      handleGitHubCallback(code);
-    }
     if (oauthToken && oauthVerifier) {
       sendTwitterToken(oauthToken, oauthVerifier);
     }
+
+    if (githubCode) {
+      sendGitHubCode(githubCode);
+    }
+
     if (errorIntegridad) {
       alert("Ya existe una cuenta con estas credenciales.");
     }
 
     return () => {};
-  }, [location.search]); // Añadimos location.search como dependencia
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -145,6 +147,7 @@ const Register = () => {
         alert(responseData.mensaje || "Usuario registrado correctamente.");
         localStorage.setItem("token", responseData.token);
         localStorage.setItem("userId", responseData.idUsuario || (responseData.Usuario && responseData.Usuario.idUsuario));
+        login({ token: responseData.token, userId: responseData.idUsuario || (responseData.Usuario && responseData.Usuario.idUsuario) });
         navigate("/login");
       } else if (response.status === 409) {
         throw new Error("El correo o nombre de usuario ya existe.");
@@ -207,6 +210,7 @@ const Register = () => {
           const userData = { token: data.token, userId };
           localStorage.setItem("token", userData.token);
           localStorage.setItem("userId", userData.userId);
+          login(userData);
           navigate("/login");
         } else {
           alert("Error al registrarse con Google: " + (data.error || "Error desconocido"));
@@ -237,16 +241,14 @@ const Register = () => {
     }
   };
 
-  const handleGitHubCallback = async (code) => {
+  const sendGitHubCode = async (code) => {
     try {
-      const response = await fetch("https://practica-django-fxpz.onrender.com/auth/github/callback/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
+      const response = await fetch(`https://practica-django-fxpz.onrender.com/auth/github/callback/?code=${code}`);
       const data = await response.json();
-      console.log("Respuesta completa de GitHub callback:", data);
+      console.log("Respuesta completa de GitHub register:", data);
+
       if (data.success) {
+        alert("Registro exitoso con GitHub.");
         let userId;
         if (data.idUsuario) {
           userId = data.idUsuario;
@@ -255,22 +257,18 @@ const Register = () => {
         } else {
           throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
         }
-        alert("Registro exitoso con GitHub.");
-        const userData = {
-          token: data.token,
-          userId,
-          isStaff: data.is_staff ?? data.usuario?.is_staff ?? false,
-        };
-        localStorage.setItem("token", userData.token);
-        localStorage.setItem("userId", userData.userId);
-        localStorage.setItem("isStaff", userData.isStaff);
+
+        const userData = { token: data.token, userId };
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", userId);
+        login(userData);
         navigate("/login");
       } else {
-        alert("Error en la autenticación con GitHub: " + (data.error || "Error desconocido"));
+        alert("Error al registrarse con GitHub: " + (data.error || "Error desconocido"));
       }
     } catch (error) {
-      console.error("Error en el callback de GitHub:", error);
-      alert("Error al autenticar con GitHub.");
+      console.error("Error en el registro con GitHub:", error);
+      alert("Error en el registro con GitHub.");
     }
   };
 
@@ -284,7 +282,10 @@ const Register = () => {
       const data = await response.json();
       if (data.success) {
         alert("Inicio de sesión exitoso con Twitter.");
+        const userData = { token: data.token, userId: data.idUsuario || (data.usuario && data.usuario.idUsuario) };
         localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", userData.userId);
+        login(userData);
         navigate("/");
       } else {
         alert("Error en la autenticación: " + (data.error || "Error desconocido"));

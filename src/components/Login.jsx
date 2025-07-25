@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Añadimos useLocation
+import { useNavigate } from "react-router-dom";
 import "../css/style.css";
 import logo from "../assets/log.png";
 import eyeIcon from "../assets/eye.png";
@@ -12,7 +12,6 @@ import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Para acceder a los parámetros de la URL
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -58,25 +57,8 @@ const Login = () => {
     loadGoogleScript();
     loadFacebookScript();
 
-    // Manejo de callbacks
-    const urlParams = new URLSearchParams(location.search);
-    const code = urlParams.get("code"); // Para GitHub
-    const oauthToken = urlParams.get("oauth_token"); // Para Twitter
-    const oauthVerifier = urlParams.get("oauth_verifier"); // Para Twitter
-    const errorIntegridad = urlParams.get("errorIntegridad");
-
-    if (code) {
-      handleGitHubCallback(code);
-    }
-    if (oauthToken && oauthVerifier) {
-      sendTwitterToken(oauthToken, oauthVerifier);
-    }
-    if (errorIntegridad) {
-      alert("Ya existe una cuenta con estas credenciales.");
-    }
-
     return () => {};
-  }, [location.search]); // Añadimos location.search como dependencia
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -112,6 +94,9 @@ const Login = () => {
         localStorage.setItem("userId", userData.userId);
         localStorage.setItem("isStaff", userData.isStaff);
         login(userData);
+        console.log("Token almacenado en localStorage:", localStorage.getItem("token"));
+        console.log("ID de usuario almacenado en localStorage:", localStorage.getItem("userId"));
+        console.log("isStaff almacenado en localStorage:", localStorage.getItem("isStaff"));
         const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
         sessionStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath);
@@ -157,6 +142,9 @@ const Login = () => {
           localStorage.setItem("userId", userData.userId);
           localStorage.setItem("isStaff", userData.isStaff);
           login(userData);
+          console.log("Token almacenado en localStorage (Google):", localStorage.getItem("token"));
+          console.log("ID de usuario almacenado en localStorage (Google):", localStorage.getItem("userId"));
+          console.log("isStaff almacenado en localStorage (Google):", localStorage.getItem("isStaff"));
           const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
           sessionStorage.removeItem("redirectAfterLogin");
           navigate(redirectPath);
@@ -198,6 +186,9 @@ const Login = () => {
         localStorage.setItem("userId", userData.userId);
         localStorage.setItem("isStaff", userData.isStaff);
         login(userData);
+        console.log("Token almacenado en localStorage (Twitter):", localStorage.getItem("token"));
+        console.log("ID de usuario almacenado en localStorage (Twitter):", localStorage.getItem("userId"));
+        console.log("isStaff almacenado en localStorage (Twitter):", localStorage.getItem("isStaff"));
         const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
         sessionStorage.removeItem("redirectAfterLogin");
         navigate(redirectPath);
@@ -207,6 +198,47 @@ const Login = () => {
     } catch (error) {
       console.error("Error al autenticar con Twitter:", error);
       alert("Error en la autenticación con Twitter.");
+    }
+  };
+
+  const sendGitHubCode = async (code) => {
+    try {
+      const response = await fetch(`https://practica-django-fxpz.onrender.com/auth/github/callback/?code=${code}`);
+      const data = await response.json();
+      console.log("Respuesta completa de GitHub login:", data);
+
+      if (data.success) {
+        let userId;
+        if (data.idUsuario) {
+          userId = data.idUsuario;
+        } else if (data.usuario && data.usuario.idUsuario) {
+          userId = data.usuario.idUsuario;
+        } else {
+          throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
+        }
+
+        alert("Inicio de sesión exitoso con GitHub.");
+        const userData = {
+          token: data.token,
+          userId,
+          isStaff: data.is_staff ?? data.usuario?.is_staff ?? false,
+        };
+
+        localStorage.setItem("token", userData.token);
+        localStorage.setItem("userId", userData.userId);
+        localStorage.setItem("isStaff", userData.isStaff);
+        login(userData);
+
+        console.log("Token almacenado en localStorage (GitHub):", localStorage.getItem("token"));
+        const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
+        sessionStorage.removeItem("redirectAfterLogin");
+        navigate(redirectPath);
+      } else {
+        alert("Error en la autenticación: " + (data.error || "Error desconocido"));
+      }
+    } catch (error) {
+      console.error("Error al autenticar con GitHub:", error);
+      alert("Error en la autenticación con GitHub.");
     }
   };
 
@@ -252,51 +284,13 @@ const Login = () => {
     }
   };
 
-  const handleGitHubCallback = async (code) => {
-    try {
-      const response = await fetch("https://practica-django-fxpz.onrender.com/auth/github/callback/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      const data = await response.json();
-      console.log("Respuesta completa de GitHub callback:", data);
-      if (data.success) {
-        let userId;
-        if (data.idUsuario) {
-          userId = data.idUsuario;
-        } else if (data.usuario && data.usuario.idUsuario) {
-          userId = data.usuario.idUsuario;
-        } else {
-          throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
-        }
-        alert("Inicio de sesión exitoso con GitHub.");
-        const userData = {
-          token: data.token,
-          userId,
-          isStaff: data.is_staff ?? data.usuario?.is_staff ?? false,
-        };
-        localStorage.setItem("token", userData.token);
-        localStorage.setItem("userId", userData.userId);
-        localStorage.setItem("isStaff", userData.isStaff);
-        login(userData);
-        const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
-        sessionStorage.removeItem("redirectAfterLogin");
-        navigate(redirectPath);
-      } else {
-        alert("Error en la autenticación con GitHub: " + (data.error || "Error desconocido"));
-      }
-    } catch (error) {
-      console.error("Error en el callback de GitHub:", error);
-      alert("Error al autenticar con GitHub.");
-    }
-  };
-
   const loginWithTwitterCustom = async () => {
     try {
       const response = await fetch("https://practica-django-fxpz.onrender.com/auth/twitter/", {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const data = await response.json();
@@ -311,6 +305,26 @@ const Login = () => {
       alert("Error al iniciar autenticación con Twitter. Por favor, intenta de nuevo.");
     }
   };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthToken = urlParams.get("oauth_token");
+    const oauthVerifier = urlParams.get("oauth_verifier");
+    const githubCode = urlParams.get("code");
+    const errorIntegridad = urlParams.get("errorIntegridad");
+
+    if (oauthToken && oauthVerifier) {
+      sendTwitterToken(oauthToken, oauthVerifier);
+    }
+
+    if (githubCode) {
+      sendGitHubCode(githubCode);
+    }
+
+    if (errorIntegridad) {
+      alert("Ya existe una cuenta con estas credenciales.");
+    }
+  }, []);
 
   return (
     <div className="auth-container">
