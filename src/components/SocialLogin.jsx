@@ -13,11 +13,20 @@ const SocialLogin = () => {
     const userId = params.get("userId");
     const isStaff = params.get("isStaff") === "true";
 
-    console.log("Parámetros recibidos en SocialLogin:", { token, userId, isStaff });
+    const extractToken = (rawToken) => {
+      const match = rawToken.match(/\(([^)]+)\)/);
+      return match ? match[1] : rawToken;
+    };
 
-    if (token && userId) {
-      const cleanToken = token.replace("Token object (", "").replace(")", "").trim() || token;
+    const cleanToken = extractToken(token);
 
+    console.log("Parámetros recibidos en SocialLogin:", {
+      token: cleanToken,
+      userId,
+      isStaff,
+    });
+
+    if (cleanToken && userId) {
       const userData = {
         token: cleanToken,
         userId,
