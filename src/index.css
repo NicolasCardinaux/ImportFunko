@@ -4660,6 +4660,7 @@ body.dark-mode .account-page .oauth-panel {
   text-transform: uppercase;
   letter-spacing: 2px;
   transition: color 0.5s ease;
+  text-align: center;
 }
 
 body.dark-mode .account-page .oauth-title {
