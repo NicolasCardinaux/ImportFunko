@@ -24,7 +24,6 @@ import AccountPage from "./components/AccountPage";
 import ThankYouComponent from "./components/ThankYouComponent";
 import RejectedPurchaseComponent from "./components/RejectedPurchaseComponent";
 import AdminLayout from "./admin/AdminLayout";
-import SocialLogin from "./components/SocialLogin";
 import { useAuth } from "./context/AuthContext";
 
 function App() {
@@ -42,28 +41,41 @@ function AppContent() {
   const [currentCount, setCurrentCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, setUserAuth } = useAuth();
+  const { isAuthenticated, user, setAuth } = useAuth();
 
-  // Inicializar autenticación desde localStorage
+  // Validate token from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
-    const isStaff = localStorage.getItem("isStaff") === "true";
-    console.log("Inicializando autenticación:", { token, userId, isStaff });
     if (token && userId) {
-      setUserAuth({ token, userId, isStaff });
+      fetch("https://practica-django-fxpz.onrender.com/auth/validate", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.user) {
+            setAuth({ isAuthenticated: true, user: data.user });
+          } else {
+            localStorage.removeItem("token");
+            localStorage.removeItem("userId");
+            setAuth({ isAuthenticated: false, user: null });
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+          setAuth({ isAuthenticated: false, user: null });
+        });
     }
-  }, [setUserAuth]);
+  }, [setAuth]);
 
   // Handle redirection for protected routes
   useEffect(() => {
-    console.log("Redirección chequeada:", { isAuthenticated, pathname: location.pathname });
     if (
       !isAuthenticated &&
       !["/login", "/register", "/quienes-somos", "/"].some((path) =>
         location.pathname === path || location.pathname.startsWith("/product/")
-      ) &&
-      location.pathname !== "/social-login"
+      )
     ) {
       navigate("/login", { replace: true });
     } else if (isAuthenticated && location.pathname === "/login") {
@@ -82,12 +94,10 @@ function AppContent() {
       fetch(`https://practica-django-fxpz.onrender.com/auth/github/callback/?code=${githubCode}`)
         .then((res) => res.json())
         .then((data) => {
-          console.log("Respuesta GitHub:", data);
           if (data.success) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("userId", data.idUsuario || (data.usuario && data.usuario.idUsuario));
-            localStorage.setItem("isStaff", data.is_staff || (data.usuario && data.usuario.is_staff) || false);
-            setUserAuth({ token: data.token, userId: data.idUsuario || (data.usuario && data.usuario.idUsuario), isStaff: data.is_staff || (data.usuario && data.usuario.is_staff) || false });
+            setAuth({ isAuthenticated: true, user: data.user });
             navigate("/", { replace: true });
           } else {
             console.error("GitHub login failed:", data.error || "Unknown error");
@@ -101,19 +111,20 @@ function AppContent() {
     }
 
     if (oauthToken && oauthVerifier) {
-      fetch("https://practica-django-fxpz.onrender.com/auth/twitter/callback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
-      })
+      fetch(
+        `https://practica-django-fxpz.onrender.com/auth/twitter/callback`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
+        }
+      )
         .then((res) => res.json())
         .then((data) => {
-          console.log("Respuesta Twitter:", data);
           if (data.success) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("userId", data.idUsuario || (data.usuario && data.usuario.idUsuario));
-            localStorage.setItem("isStaff", data.is_staff || (data.usuario && data.usuario.is_staff) || false);
-            setUserAuth({ token: data.token, userId: data.idUsuario || (data.usuario && data.usuario.idUsuario), isStaff: data.is_staff || (data.usuario && data.usuario.is_staff) || false });
+            setAuth({ isAuthenticated: true, user: data.user });
             navigate("/", { replace: true });
           } else {
             console.error("Twitter login failed:", data.error || "Unknown error");
@@ -125,7 +136,7 @@ function AppContent() {
           alert("Error al iniciar sesión con Twitter.");
         });
     }
-  }, [navigate, setUserAuth]);
+  }, [navigate, setAuth]); // Empty deps since OAuth runs on mount with query params
 
   // Sync filters with URL query params
   useEffect(() => {
@@ -149,6 +160,7 @@ function AppContent() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   const isAdminPage = location.pathname.startsWith("/admin");
 
+  // Enhanced AdminRoute with unauthorized message
   const AdminRoute = ({ children }) => {
     if (user?.isStaff) {
       return children;
@@ -162,6 +174,7 @@ function AppContent() {
     );
   };
 
+  // New PrivateRoute for protected routes
   const PrivateRoute = ({ children }) => {
     if (isAuthenticated) {
       return children;
@@ -218,8 +231,14 @@ function AppContent() {
             <Route path="/mis-datos" element={<PrivateRoute><AccountPage /></PrivateRoute>} />
             <Route path="/gracias" element={<PrivateRoute><ThankYouComponent /></PrivateRoute>} />
             <Route path="/rechazado" element={<PrivateRoute><RejectedPurchaseComponent /></PrivateRoute>} />
-            <Route path="/admin/*" element={<AdminRoute><AdminLayout /></AdminRoute>} />
-            <Route path="/social-login" element={<SocialLogin />} />
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            />
           </Routes>
         </main>
         {!isAuthPage && !isAdminPage && <Footer />}
