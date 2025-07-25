@@ -3446,6 +3446,66 @@ body.dark-mode .about-us-image:hover {
   border: 2px solid #D32F2F;
 }
 
+.contact-dropdown-container {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.contact-toggle-button {
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode .contact-toggle-button {
+  background-color: #D32F2F;
+  color: white;
+}
+
+body:not(.dark-mode) .contact-toggle-button {
+  background-color: #4A90E2;
+  color: black;
+}
+
+.contact-options {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-width: 400px;
+  margin-inline: auto;
+}
+
+.contact-option {
+  background-color: #f7f7f7;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.contact-option:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.02);
+}
+
+body.dark-mode .contact-option {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+body.dark-mode .contact-option:hover {
+  background-color: #444;
+}
+
+
 /* AboutUs Mobile */
 @media (max-width: 768px) {
   .about-us-subtitle {
