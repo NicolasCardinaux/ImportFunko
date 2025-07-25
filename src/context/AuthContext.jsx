@@ -19,28 +19,22 @@ export const AuthProvider = ({ children }) => {
     return token && userId ? { token, userId, isStaff } : null;
   });
 
-  // Sincronizar con localStorage
   useEffect(() => {
-    try {
-      if (user) {
-        localStorage.setItem("token", user.token);
-        localStorage.setItem("userId", user.userId);
-        localStorage.setItem("isStaff", user.isStaff);
-        localStorage.setItem("sessionStarted", "true");
-        localStorage.setItem("lastActivity", Date.now().toString());
-      } else {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("isStaff");
-        localStorage.removeItem("sessionStarted");
-        localStorage.removeItem("lastActivity");
-      }
-    } catch (error) {
-      console.error("Error syncing with localStorage:", error);
+    if (user) {
+      localStorage.setItem("token", user.token);
+      localStorage.setItem("userId", user.userId);
+      localStorage.setItem("isStaff", user.isStaff);
+      localStorage.setItem("sessionStarted", "true");
+      localStorage.setItem("lastActivity", Date.now().toString());
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("isStaff");
+      localStorage.removeItem("sessionStarted");
+      localStorage.removeItem("lastActivity");
     }
   }, [user]);
 
-  // Actualizar lastActivity
   useEffect(() => {
     const updateLastActivity = () => {
       if (user) {
@@ -60,22 +54,19 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const login = (userData) => {
+    const sessionStarted = localStorage.getItem("sessionStarted");
+    if (sessionStarted) return;
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem("sessionStarted");
     setUser(null);
-  };
-
-  const setUserAuth = (userData) => {
-    setUser(userData);
   };
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, setUserAuth }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
