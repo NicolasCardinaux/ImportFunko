@@ -121,7 +121,14 @@ const ProductList = ({ filters, searchTerm, setFilteredCount, setCurrentCount, u
       );
     }
 
-    console.log("Productos filtrados:", filtered);
+    // Ordenar productos: los que tienen stock > 0 primero, los que tienen stock === 0 al final
+    filtered.sort((a, b) => {
+      if (a.stock > 0 && b.stock === 0) return -1; // a (con stock) antes que b (sin stock)
+      if (a.stock === 0 && b.stock > 0) return 1;  // b (con stock) antes que a (sin stock)
+      return 0; // Mantener orden relativo si ambos tienen o no tienen stock
+    });
+
+    console.log("Productos filtrados y ordenados:", filtered);
     setFilteredProducts(filtered);
     setFilteredCount(filtered.length);
     setCurrentPage(1);
