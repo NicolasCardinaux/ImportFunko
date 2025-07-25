@@ -44,27 +44,24 @@ function AppContent() {
   const navigate = useNavigate();
   const { isAuthenticated, user, setAuth } = useAuth();
 
-  // Inicializar autenticación desde localStorage sin validación en el backend
+  // Inicializar autenticación desde localStorage sin validación
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
     const isStaff = localStorage.getItem("isStaff") === "true";
     if (token && userId) {
       setAuth({ isAuthenticated: true, user: { idUsuario: userId, is_staff: isStaff } });
-    } else {
-      setAuth({ isAuthenticated: false, user: null });
     }
   }, [setAuth]);
 
-  // Handle redirection for protected routes with debounce-like logic
+  // Handle redirection for protected routes
   useEffect(() => {
-    // Prevent infinite loops by checking current pathname
     if (
       !isAuthenticated &&
       !["/login", "/register", "/quienes-somos", "/"].some((path) =>
         location.pathname === path || location.pathname.startsWith("/product/")
       ) &&
-      location.pathname !== "/social-login" // Avoid redirecting during social login
+      location.pathname !== "/social-login"
     ) {
       navigate("/login", { replace: true });
     } else if (isAuthenticated && location.pathname === "/login") {
@@ -81,15 +78,13 @@ function AppContent() {
 
     if (githubCode) {
       fetch(`https://practica-django-fxpz.onrender.com/auth/github/callback/?code=${githubCode}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("GitHub callback failed");
-          return res.json();
-        })
+        .then((res) => res.json())
         .then((data) => {
           if (data.success) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("userId", data.idUsuario || (data.usuario && data.usuario.idUsuario));
-            setAuth({ isAuthenticated: true, user: data.user });
+            localStorage.setItem("isStaff", data.is_staff || (data.usuario && data.usuario.is_staff) || false);
+            setAuth({ isAuthenticated: true, user: { idUsuario: data.idUsuario || (data.usuario && data.usuario.idUsuario), is_staff: data.is_staff || (data.usuario && data.usuario.is_staff) || false } });
             navigate("/", { replace: true });
           } else {
             console.error("GitHub login failed:", data.error || "Unknown error");
@@ -108,15 +103,13 @@ function AppContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oauth_token: oauthToken, oauth_verifier: oauthVerifier }),
       })
-        .then((res) => {
-          if (!res.ok) throw new Error("Twitter callback failed");
-          return res.json();
-        })
+        .then((res) => res.json())
         .then((data) => {
           if (data.success) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("userId", data.idUsuario || (data.usuario && data.usuario.idUsuario));
-            setAuth({ isAuthenticated: true, user: data.user });
+            localStorage.setItem("isStaff", data.is_staff || (data.usuario && data.usuario.is_staff) || false);
+            setAuth({ isAuthenticated: true, user: { idUsuario: data.idUsuario || (data.usuario && data.usuario.idUsuario), is_staff: data.is_staff || (data.usuario && data.usuario.is_staff) || false } });
             navigate("/", { replace: true });
           } else {
             console.error("Twitter login failed:", data.error || "Unknown error");
@@ -152,7 +145,6 @@ function AppContent() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   const isAdminPage = location.pathname.startsWith("/admin");
 
-  // Enhanced AdminRoute with unauthorized message
   const AdminRoute = ({ children }) => {
     if (user?.is_staff) {
       return children;
@@ -166,7 +158,6 @@ function AppContent() {
     );
   };
 
-  // New PrivateRoute for protected routes
   const PrivateRoute = ({ children }) => {
     if (isAuthenticated) {
       return children;
