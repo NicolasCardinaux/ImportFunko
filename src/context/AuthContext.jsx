@@ -19,22 +19,47 @@ export const AuthProvider = ({ children }) => {
     return token && userId ? { token, userId, isStaff } : null;
   });
 
+  // Validar token al montar
   useEffect(() => {
-    if (user) {
-      localStorage.setItem("token", user.token);
-      localStorage.setItem("userId", user.userId);
-      localStorage.setItem("isStaff", user.isStaff);
-      localStorage.setItem("sessionStarted", "true");
-      localStorage.setItem("lastActivity", Date.now().toString());
-    } else {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("isStaff");
-      localStorage.removeItem("sessionStarted");
-      localStorage.removeItem("lastActivity");
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("https://practica-django-fxpz.onrender.com/auth/validate", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.user) {
+            setUser({ token, userId: localStorage.getItem("userId"), isStaff: localStorage.getItem("isStaff") === "true" });
+          } else {
+            logout();
+          }
+        })
+        .catch(() => logout());
+    }
+  }, []);
+
+  // Sincronizar con localStorage
+  useEffect(() => {
+    try {
+      if (user) {
+        localStorage.setItem("token", user.token);
+        localStorage.setItem("userId", user.userId);
+        localStorage.setItem("isStaff", user.isStaff);
+        localStorage.setItem("sessionStarted", "true");
+        localStorage.setItem("lastActivity", Date.now().toString());
+      } else {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("isStaff");
+        localStorage.removeItem("sessionStarted");
+        localStorage.removeItem("lastActivity");
+      }
+    } catch (error) {
+      console.error("Error syncing with localStorage:", error);
     }
   }, [user]);
 
+  // Actualizar lastActivity
   useEffect(() => {
     const updateLastActivity = () => {
       if (user) {
@@ -54,12 +79,11 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const login = (userData) => {
-    const sessionStarted = localStorage.getItem("sessionStarted");
-    if (sessionStarted) return;
     setUser(userData);
   };
 
   const logout = () => {
+    localStorage.removeItem("sessionStarted");
     setUser(null);
   };
 

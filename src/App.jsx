@@ -24,6 +24,7 @@ import AccountPage from "./components/AccountPage";
 import ThankYouComponent from "./components/ThankYouComponent";
 import RejectedPurchaseComponent from "./components/RejectedPurchaseComponent";
 import AdminLayout from "./admin/AdminLayout";
+import SocialLogin from "./components/SocialLogin"; // Importar el nuevo componente
 import { useAuth } from "./context/AuthContext";
 
 function App() {
@@ -136,7 +137,7 @@ function AppContent() {
           alert("Error al iniciar sesión con Twitter.");
         });
     }
-  }, [navigate, setAuth]); // Empty deps since OAuth runs on mount with query params
+  }, [navigate, setAuth]);
 
   // Sync filters with URL query params
   useEffect(() => {
@@ -231,14 +232,8 @@ function AppContent() {
             <Route path="/mis-datos" element={<PrivateRoute><AccountPage /></PrivateRoute>} />
             <Route path="/gracias" element={<PrivateRoute><ThankYouComponent /></PrivateRoute>} />
             <Route path="/rechazado" element={<PrivateRoute><RejectedPurchaseComponent /></PrivateRoute>} />
-            <Route
-              path="/admin/*"
-              element={
-                <AdminRoute>
-                  <AdminLayout />
-                </AdminRoute>
-              }
-            />
+            <Route path="/admin/*" element={<AdminRoute><AdminLayout /></AdminRoute>} />
+            <Route path="/social-login" element={<SocialLogin />} /> {/* Nueva ruta para social login */}
           </Routes>
         </main>
         {!isAuthPage && !isAdminPage && <Footer />}
