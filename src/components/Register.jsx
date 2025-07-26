@@ -35,7 +35,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Detectar parámetro de error en la URL
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const error = params.get("error");

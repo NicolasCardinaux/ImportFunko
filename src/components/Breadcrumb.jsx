@@ -9,7 +9,7 @@ const Breadcrumb = ({ productTitle }) => {
       </Link>
       <span className="breadcrumb-separator"> &gt; </span>
       
-      {/* Línea separadora */}
+      {}
       <div className="separator-line"></div>
 
       <span className="breadcrumb-current">{productTitle || "Producto desconocido"}</span>

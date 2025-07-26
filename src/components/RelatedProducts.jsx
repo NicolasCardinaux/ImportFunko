@@ -89,7 +89,7 @@ const RelatedProducts = ({ productId, category }) => {
     return percentage ? (originalPrice * (1 - percentage / 100)).toFixed(2) : null;
   };
 
-  // Handlers para navegación
+
   const handleViewMore = () => {
     navigate(`/?category=${encodeURIComponent(category)}`);
   };

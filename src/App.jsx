@@ -25,7 +25,7 @@ import ThankYouComponent from "./components/ThankYouComponent";
 import RejectedPurchaseComponent from "./components/RejectedPurchaseComponent";
 import AdminLayout from "./admin/AdminLayout";
 import { useAuth } from "./context/AuthContext";
-import SocialLogin from "./components/SocialLogin"; // ✅ NUEVO
+import SocialLogin from "./components/SocialLogin"; 
 
 function App() {
   return (
@@ -51,7 +51,7 @@ function AppContent() {
       location.pathname !== "/register" &&
       location.pathname !== "/quienes-somos" &&
       !location.pathname.startsWith("/product/") &&
-      location.pathname !== "/social-login" // ✅ EXCEPCIÓN para login social
+      location.pathname !== "/social-login" 
     ) {
       navigate("/", { replace: true });
     } else if (isAuthenticated && location.pathname === "/login") {
