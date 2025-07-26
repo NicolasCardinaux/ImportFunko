@@ -13,8 +13,17 @@ function AboutUs() {
     const subjectEncoded = encodeURIComponent(subject);
     const bodyEncoded = encodeURIComponent("Hola ImportFunko, tengo la siguiente consulta:");
 
-    const gmailURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subjectEncoded}&body=${bodyEncoded}`;
-    window.open(gmailURL, '_blank');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // En móvil: abrir la app de correo
+      const mailtoLink = `mailto:${email}?subject=${subjectEncoded}&body=${bodyEncoded}`;
+      window.location.href = mailtoLink;
+    } else {
+      // En PC: abrir Gmail Web
+      const gmailURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subjectEncoded}&body=${bodyEncoded}`;
+      window.open(gmailURL, '_blank');
+    }
   };
 
   const consultaOptions = [
