@@ -9,8 +9,12 @@ function AboutUs() {
   const [showOptions, setShowOptions] = useState(false);
 
   const handleOptionClick = (subject) => {
-    const mailtoLink = `mailto:importfunko@gmail.com?subject=${encodeURIComponent(subject)}`;
-    window.location.href = mailtoLink;
+    const email = 'importfunko@gmail.com';
+    const subjectEncoded = encodeURIComponent(subject);
+    const bodyEncoded = encodeURIComponent("Hola ImportFunko, tengo la siguiente consulta:");
+
+    const gmailURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subjectEncoded}&body=${bodyEncoded}`;
+    window.open(gmailURL, '_blank');
   };
 
   const consultaOptions = [
