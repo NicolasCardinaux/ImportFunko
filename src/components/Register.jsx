@@ -35,7 +35,6 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const error = params.get("error");
@@ -138,10 +137,7 @@ const Register = () => {
 
       if (response.status === 201) {
         const responseData = await response.json();
-        alert(responseData.mensaje || "Usuario registrado correctamente.");
-        localStorage.setItem("token", responseData.token);
-        localStorage.setItem("userId", responseData.idUsuario || (responseData.Usuario && responseData.Usuario.idUsuario));
-        login({ token: responseData.token, userId: responseData.idUsuario || (responseData.Usuario && responseData.Usuario.idUsuario) });
+        alert(responseData.mensaje || "Usuario registrado correctamente. Por favor, inicia sesión.");
         navigate("/login");
       } else if (response.status === 409) {
         const errorData = await response.json();
@@ -203,20 +199,7 @@ const Register = () => {
       .then((data) => {
         console.log("Respuesta completa de Google register:", JSON.stringify(data, null, 2));
         if (data.success) {
-          alert("Registro exitoso con Google.");
-          let userId;
-          if (data.idUsuario) {
-            userId = data.idUsuario;
-          } else if (data.usuario && data.usuario.idUsuario) {
-            userId = data.usuario.idUsuario;
-          } else {
-            console.error("Estructura de respuesta inesperada:", data);
-            throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
-          }
-          const userData = { token: data.token, userId };
-          localStorage.setItem("token", userData.token);
-          localStorage.setItem("userId", userData.userId);
-          login(userData);
+          alert("Registro exitoso con Google. Por favor, inicia sesión.");
           navigate("/login");
         } else {
           const errorMsg = data.error || "Error desconocido";
