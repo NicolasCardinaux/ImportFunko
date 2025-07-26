@@ -55,7 +55,7 @@ function AboutUs() {
       {isAuthenticated && (
         <div className="contact-dropdown-container">
           <button
-            className="contact-toggle-button"
+            className="consult-button"
             onClick={() => setShowOptions(!showOptions)}
           >
             Consultar
