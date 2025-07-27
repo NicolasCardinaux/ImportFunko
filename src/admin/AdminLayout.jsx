@@ -10,13 +10,31 @@ import CrearDescuento from './components/CrearDescuento';
 import ListarDescuentos from './components/ListarDescuentos';
 import ListarVentas from './components/ListarVentas';
 import EditarFunko from './components/EditarFunko';
-import './App.module.css'; 
+import DetalleCompra from './components/DetalleCompra';
+
+import './App.module.css';
 
 const AdminLayout = () => {
   return (
-    <div className="admin-wrapper" style={{ backgroundColor: '#fff', minHeight: '100vh', width: '100vw', position: 'relative', overflowX: 'hidden' }}>
+    <div
+      className="admin-wrapper"
+      style={{
+        backgroundColor: '#fff',
+        minHeight: '100vh',
+        width: '100vw',
+        position: 'relative',
+        overflowX: 'hidden',
+      }}
+    >
       <Sidebar />
-      <div className="admin-content" style={{ marginLeft: '220px', padding: '20px', width: 'calc(100vw - 220px)' }}>
+      <div
+        className="admin-content"
+        style={{
+          marginLeft: '220px',
+          padding: '20px',
+          width: 'calc(100vw - 220px)',
+        }}
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="crear-funko" element={<CrearFunko />} />
@@ -27,6 +45,7 @@ const AdminLayout = () => {
           <Route path="listar-descuentos" element={<ListarDescuentos />} />
           <Route path="listar-ventas" element={<ListarVentas />} />
           <Route path="editar-funko/:id" element={<EditarFunko />} />
+          <Route path="listar-ventas/:id" element={<DetalleCompra />} />
         </Routes>
       </div>
     </div>

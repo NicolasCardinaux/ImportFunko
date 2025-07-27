@@ -155,6 +155,54 @@ tr.eliminando {
     transition: opacity 0.3s ease;
 }
 
+.btn-estado {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+
+.btn-estado:hover {
+  background-color: #f0f0f0;
+}
+
+.btn-estado:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-estado svg {
+  display: block;
+}
+
+.btn-detalles,
+.btn-estado {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.btn-detalles:hover,
+.btn-estado:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.1);
+}
+
+.btn-estado:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.btn-detalles svg,
+.btn-estado svg {
+    display: block;
+}
+
 @media (max-width: 768px) {
     .listar {
         width: 95%;
