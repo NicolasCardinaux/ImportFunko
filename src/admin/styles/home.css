@@ -19,6 +19,11 @@
     width: 100%;
 }
 
+.box h1,
+.box p {
+  color: #000;
+}
+
 .stats {
     display: flex;
     justify-content: center;
