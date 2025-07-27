@@ -64,7 +64,7 @@ const CheckoutPage = () => {
     return () => {
       const existingScript = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
       if (existingScript) {
-        // No es necesario remover el script de MP
+
       }
     };
   }, []);
@@ -426,7 +426,7 @@ const CheckoutPage = () => {
 
       const preferenceId = data.preference_id;
       
-      const mp = new window.MercadoPago('APP_USR-61f3d47d-4634-4a02-9185-68f2255e63c2');
+      const mp = new window.MercadoPago('APP_USR-629234dd-ead6-4264-af26-77253aa46c39');
       mp.bricks().create("wallet", "wallet_container", {
         initialization: {
           preferenceId: preferenceId,
