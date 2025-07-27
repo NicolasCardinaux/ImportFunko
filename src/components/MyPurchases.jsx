@@ -30,19 +30,21 @@ const MyPurchases = () => {
           headers: { Authorization: `Token ${token}` },
         });
         const data = await res.json();
-        data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Ordenar de más reciente a más antiguo
         setPurchases(data);
 
         const images = {};
         for (const purchase of data) {
           for (const item of purchase.items) {
             const funkoId = item.funko.idFunko;
-            const imageRes = await fetch(`${API_BASE}/funkos/${funkoId}`, {
-              headers: { Authorization: `Token ${token}` },
-            });
-            const funkoData = await imageRes.json();
-            if (funkoData.Funko?.imagen?.url) {
-              images[funkoId] = funkoData.Funko.imagen.url;
+            if (!images[funkoId]) { // Evitar fetches duplicados
+              const imageRes = await fetch(`${API_BASE}/funkos/${funkoId}`, {
+                headers: { Authorization: `Token ${token}` },
+              });
+              const funkoData = await imageRes.json();
+              if (funkoData.Funko?.imagen?.url) {
+                images[funkoId] = funkoData.Funko.imagen.url;
+              }
             }
           }
         }
@@ -81,6 +83,12 @@ const MyPurchases = () => {
 
   const toggleDetails = (event, id) => {
     const targetClass = event.target.className;
+    const isClickableLink = typeof targetClass === 'string' && targetClass.includes('item-description-mobile-link');
+  
+    if (isClickableLink) {
+      return; // No hacer nada si se hace clic en el enlace "Ver Descripción"
+    }
+  
     if (
       typeof targetClass === 'string' &&
       !targetClass.includes('item-image') &&
@@ -91,6 +99,7 @@ const MyPurchases = () => {
       !targetClass.includes('review-textarea') &&
       !targetClass.includes('star-rating') &&
       !targetClass.includes('submit-review-button') &&
+      !targetClass.includes('delete-btn') &&
       expandedPurchaseId === id
     ) {
       setExpandedPurchaseId(null);
@@ -103,7 +112,8 @@ const MyPurchases = () => {
       !targetClass.includes('review-list') &&
       !targetClass.includes('review-textarea') &&
       !targetClass.includes('star-rating') &&
-      !targetClass.includes('submit-review-button')
+      !targetClass.includes('submit-review-button') &&
+      !targetClass.includes('delete-btn')
     ) {
       setExpandedPurchaseId(id);
     }
@@ -240,7 +250,7 @@ const MyPurchases = () => {
                 }`}
                 onClick={(e) => toggleDetails(e, purchase.idCompra)}
               >
-                <p className="purchase-title">Compra #{index + 1}</p>
+                <p className="purchase-title">Compra #{purchase.idCompra}</p>
                 <p><strong>Fecha:</strong> {new Date(purchase.fecha).toLocaleDateString()}</p>
                 <p><strong>Total:</strong> ${purchase.total}</p>
                 <p><strong>Estado:</strong> {traducirEstado(purchase.estado)}</p>
@@ -249,6 +259,18 @@ const MyPurchases = () => {
                   <div className="purchase-details">
                     <h3>Detalles de la Compra</h3>
                     <p><strong>Subtotal:</strong> ${purchase.subtotal}</p>
+                    
+                    {purchase.direccion && (
+                      <>
+                        <p>
+                          <strong>Provincia:</strong> {purchase.direccion.provincia || "No disponible"}
+                        </p>
+                        <p>
+                          <strong>Ciudad:</strong> {purchase.direccion.ciudad || "No disponible"}
+                        </p>
+                      </>
+                    )}
+
                     <p>
                       <strong>Dirección:</strong>{" "}
                       {purchase.direccion
@@ -286,7 +308,19 @@ const MyPurchases = () => {
                                     {item.funko.nombre}
                                   </strong>
                                 </p>
-                                <p>{item.funko.descripción}</p>
+                                
+                                <p className="item-description-desktop">{item.funko.descripción}</p>
+                                
+                                <p className="item-description-mobile">
+                                  <span 
+                                    className="item-description-mobile-link"
+                                    onClick={() => handleFunkoClick(item.funko.idFunko)}
+                                    style={{ cursor: 'pointer', color: '#4A90E2', textDecoration: 'underline' }}
+                                  >
+                                    Ver Descripción
+                                  </span>
+                                </p>
+
                                 <p className="item-quantity">Cantidad: {item.cantidad}</p>
                                 <p className="item-subtotal">Subtotal: ${item.subtotal}</p>
                               </div>
@@ -307,7 +341,7 @@ const MyPurchases = () => {
 
                                 {showReviewForm[item.funko.idFunko] && (
                                   <div className="review-container" onClick={(e) => e.stopPropagation()}>
-                                    {!userReview && (
+                                    {!userReview ? (
                                       <div className="review-form">
                                         <textarea
                                           placeholder="Escribí tu reseña (máx. 300 caracteres)"
@@ -320,7 +354,7 @@ const MyPurchases = () => {
                                           maxLength={300}
                                         />
                                         <p className="char-counter">
-                                          {newReview[item.funko.idFunko]?.contenido?.length || 0}/300 
+                                          {newReview[item.funko.idFunko]?.contenido?.length || 0}/300
                                         </p>
                                         <div className="star-rating" onClick={(e) => e.stopPropagation()}>
                                           <ReactStars
@@ -343,9 +377,7 @@ const MyPurchases = () => {
                                           Enviar Reseña
                                         </button>
                                       </div>
-                                    )}
-
-                                    {userReview && (
+                                    ) : (
                                       <div className="review-list" onClick={(e) => e.stopPropagation()}>
                                         <p><strong>Tu reseña:</strong></p>
                                         <p>{userReview.contenido}</p>
