@@ -168,7 +168,7 @@ const CheckoutPage = () => {
         return;
       }
 
-      // Condición para esperar a que los descuentos se carguen
+      
       if (discounts.length === 0) {
         return; 
       }
@@ -405,7 +405,7 @@ const CheckoutPage = () => {
         credentials: 'include',
         body: JSON.stringify({
           direccion_id: direccion_id,
-          envio: costoDeEnvio, // Se usa la variable declarada
+          envio: costoDeEnvio, 
         }),
       });
 

@@ -91,7 +91,7 @@ const ListarFunkos = () => {
   };
 
   const handleEditar = (idFunko) => {
-    navigate(`/admin/editar-funko/${idFunko}`); // Corregido a /admin/editar-funko/:id
+    navigate(`/admin/editar-funko/${idFunko}`); 
   };
 
   return (
