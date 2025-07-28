@@ -37,6 +37,8 @@ body {
     position: absolute;
 }
 
+
+
 .tabla {
     width: 100%;
     border-collapse: collapse;
@@ -65,7 +67,7 @@ body {
 }
 
 .tabla td {
-    color: #555;
+    color: #252525;
     font-size: 14px;
 }
 

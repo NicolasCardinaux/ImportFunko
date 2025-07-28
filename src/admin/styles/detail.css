@@ -17,6 +17,14 @@
     padding-bottom: 15px;
 }
 
+.seccion p {
+    color: #000;
+}
+
+.direccion-completa p {
+    color: #000; 
+}
+
 .seccion {
     margin-bottom: 30px;
     padding: 20px;
