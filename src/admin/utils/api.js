@@ -1,6 +1,7 @@
 const BASE_URL = "https://practica-django-fxpz.onrender.com";
 const API_TOKEN = "221a72f73c7aee1c4d00ea16ad712347a53260f1";
 
+
 export const crearFunko = async (funkoData) => {
   try {
     console.log("Creando funko con datos:", funkoData);
@@ -474,6 +475,28 @@ export const obtenerDetalleCompra = async (idCompra) => {
     } else {
       const errorData = await response.json();
       return { success: false, message: errorData.message };
+    }
+  } catch (error) {
+    return { success: false, message: `Error en la solicitud: ${error.message}` };
+  }
+};
+
+export const obtenerDetalleDireccion = async (idDireccion) => {
+  try {
+    const response = await fetch(`${BASE_URL}/direcciones/${idDireccion}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${API_TOKEN}`,
+      },
+    });
+
+    if (response.status === 200) {
+      const data = await response.json();
+      return { success: true, data };
+    } else {
+      const errorData = await response.json();
+      return { success: false, message: errorData.message || 'Error al obtener la dirección' };
     }
   } catch (error) {
     return { success: false, message: `Error en la solicitud: ${error.message}` };

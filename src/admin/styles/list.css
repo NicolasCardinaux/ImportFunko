@@ -129,6 +129,19 @@ body {
     transition: background-color 0.2s;
 }
 
+.btn-eli-cat-des {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    padding-left: 28px;
+}
+
 .btn-eliminar:disabled {
     opacity: 0.5;
     cursor: not-allowed;

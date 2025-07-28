@@ -104,7 +104,7 @@ const ListarCategorias = () => {
                       ) : (
                         <button
                           onClick={() => handleEliminar(categoria.idCategoria)}
-                          className="btn-eliminar"
+                          className="btn-eli-cat-des"
                           title="Eliminar categoría"
                           disabled={eliminando}
                         >

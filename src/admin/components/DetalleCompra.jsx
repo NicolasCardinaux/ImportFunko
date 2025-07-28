@@ -1,21 +1,33 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { obtenerDetalleCompra } from "../utils/api";
+import { obtenerDetalleCompra, obtenerDetalleDireccion } from "../utils/api";
 import '../styles/detail.css'
 
 const DetalleCompra = () => {
   const { id } = useParams();
   const [compra, setCompra] = useState(null);
+  const [direccionDetallada, setDireccionDetallada] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const cargarDetalles = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
         const resultado = await obtenerDetalleCompra(id);
 
         if (resultado.success) {
           setCompra(resultado.data);
+
+          if (resultado.data.direccion && resultado.data.direccion.idDireccion) {
+            const resultadoDireccion = await obtenerDetalleDireccion(resultado.data.direccion.idDireccion);
+
+            if (resultadoDireccion.success) {
+              setDireccionDetallada(resultadoDireccion.data);
+            }
+          }
         } else {
           setError(resultado.message || "Error al cargar detalles");
         }
@@ -32,6 +44,8 @@ const DetalleCompra = () => {
   if (loading) return <p>Cargando detalles...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!compra) return <p>No se encontró la compra</p>;
+
+  const costoEnvio = compra.total - compra.subtotal;
 
   return (
     <div className="detalle-compra">
@@ -55,16 +69,26 @@ const DetalleCompra = () => {
         </p>
         {compra.direccion.piso && compra.direccion.depto && (
           <p>
-            <strong>Piso/Depto:</strong> {compra.direccion.piso}{" "}
-            {compra.direccion.depto}
+            <strong>Piso:</strong> {compra.direccion.piso}
+            {"︱"}
+            <strong>Depto:</strong> {compra.direccion.depto}
           </p>
         )}
         <p>
           <strong>Código Postal:</strong> {compra.direccion.codigo_postal}
         </p>
-        <p>
-          <strong>Ciudad:</strong> {compra.direccion.ciudad}
-        </p>
+        {direccionDetallada ? (
+          <>
+            <p>
+              <strong>Ciudad:</strong> {direccionDetallada.ciudad}
+            </p>
+            <p>
+              <strong>Provincia:</strong> {direccionDetallada.provincia}
+            </p>
+          </>
+        ) : (
+          <p>Cargando detalles de ubicación...</p>
+        )}
       </div>
 
       <div className="seccion">
@@ -90,6 +114,9 @@ const DetalleCompra = () => {
           </tbody>
         </table>
         <div className="totales">
+          <p>
+            <strong>Costo de envío:</strong> ${costoEnvio.toFixed(2)}
+          </p>
           <p>
             <strong>Subtotal:</strong> ${compra.subtotal.toFixed(2)}
           </p>
