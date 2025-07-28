@@ -270,7 +270,7 @@ const EditarFunko = () => {
       }
 
       alert("Funko actualizado exitosamente!");
-      navigate("/listar-funkos");
+      navigate("/admin/listar-funkos");
     } catch (error) {
       console.error("Error en el proceso de actualización:", error);
       alert(`Ocurrió un error inesperado: ${error.message}`);
@@ -436,7 +436,7 @@ const EditarFunko = () => {
           <button
             type="button"
             className="btn-cancelar"
-            onClick={() => navigate("/listar-funkos")}
+            onClick={() => navigate("/admin/listar-funkos")}
           >
             Cancelar
           </button>
