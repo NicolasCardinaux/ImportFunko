@@ -85,4 +85,3 @@ npm install
 # 5. Inicia el servidor de desarrollo:
 npm run dev
 
----
