@@ -71,3 +71,18 @@
 - 🔄 Estructura escalable ideal para ampliaciones futuras (pagos, reviews, etc.).
 
 ---
+
+## 🛠️ Instalación Local
+
+```bash
+# 1. Clona el repositorio:
+git clone https://github.com/NicolasCardinaux/ImportFunko.git
+# 2. Navega al directorio del proyecto:
+cd ImportFunko
+# 3. Instala dependencias del frontend:
+npm install
+# 4. Configura las variables de entorno en .env (ver .env.example)
+# 5. Inicia el servidor de desarrollo:
+npm run dev
+
+---
