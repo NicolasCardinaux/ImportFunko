@@ -415,7 +415,7 @@ const ProductDetail = () => {
                 "Brilla en tu colección",
                 "Edición para fanáticos",
                 "Perfecto para exhibir",
-                "Un must coleccionable",
+                "Ideal para ti",
                 "Tu héroe favorito",
                 "Añádelo a tu vitrina",
                 "Colección que inspira",

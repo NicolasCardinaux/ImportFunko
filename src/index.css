@@ -3701,7 +3701,13 @@ body.dark-mode .cart-table td {
   font-weight: 500;
   margin-top: 0.3rem;
   color: #2E2E2E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  text-align: center;
 }
+
 
 body.dark-mode .cart-item-name {
   color: #EAEAEA;
@@ -3710,8 +3716,35 @@ body.dark-mode .cart-item-name {
 .cart-quantity-control {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
 }
+
+.cart-quantity-select {
+  padding: 4px 8px;
+  font-size: 1rem;
+  width: 60px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  background-color: #CFEEF8;
+  color: #2E2E2E;
+  font-weight: bold;
+  cursor: pointer;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode .cart-quantity-select {
+  background-color: #2A2A2A;
+  color: #EAEAEA;
+  border-color: #FFF;
+}
+
+.cart-item-quantity {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 10px; /* mueve a la izquierda */
+}
+
+
 
 .cart-quantity-btn {
   width: 30px;

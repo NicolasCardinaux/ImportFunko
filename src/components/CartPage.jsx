@@ -15,6 +15,7 @@ const CartPage = () => {
   const [loading, setLoading] = useState(true);
   const [funkoDiscounts, setFunkoDiscounts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
+  const [updatingItemIds, setUpdatingItemIds] = useState([]);
 
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
@@ -165,38 +166,63 @@ const CartPage = () => {
 
     if (newQuantity === currentQuantity) return;
 
-    // Actualizo en la UI inmediatamente
-    setQuantities((prev) => {
-      const newQuantities = { ...prev, [cartItemId]: newQuantity };
-      localStorage.setItem("cartQuantities", JSON.stringify(newQuantities));
-      return newQuantities;
-    });
+    setUpdatingItemIds((prev) => [...prev, cartItemId]);
 
     try {
-      const res = await fetch("https://practica-django-fxpz.onrender.com/carritos", {
+      // Paso 1: Eliminar el ítem existente
+      const deleteResponse = await fetch("https://practica-django-fxpz.onrender.com/carritos", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ idFunko: funkoId }),
+      });
+
+      if (!deleteResponse.ok) {
+        const text = await deleteResponse.text();
+        throw new Error(`Error al eliminar el ítem: ${deleteResponse.status} - ${text}`);
+      }
+
+      // Paso 2: Agregar el ítem con la nueva cantidad
+      const postResponse = await fetch("https://practica-django-fxpz.onrender.com/carritos", {
         method: "POST",
         headers: {
           Authorization: `Token ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          idCarritoItem: cartItemId,
-          cantidad: newQuantity,
           idFunko: funkoId,
+          cantidad: newQuantity,
         }),
       });
 
-      if (!res.ok) throw new Error("Error al actualizar");
+      if (!postResponse.ok) {
+        const text = await postResponse.text();
+        throw new Error(`Error al actualizar la cantidad: ${postResponse.status} - ${text}`);
+      }
+
+      // Actualizar el estado local
+      setQuantities((prev) => {
+        const newQuantities = { ...prev, [cartItemId]: newQuantity };
+        localStorage.setItem("cartQuantities", JSON.stringify(newQuantities));
+        return newQuantities;
+      });
+
+      // Refrescar los ítems del carrito
+      await fetchCartItemsAndStock();
     } catch (err) {
-      // Revertir si falla
+      setError(err.message);
       setQuantities((prev) => ({ ...prev, [cartItemId]: currentQuantity }));
+    } finally {
+      setUpdatingItemIds((prev) => prev.filter((id) => id !== cartItemId));
     }
   };
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
       const isOutOfStock = stock[item.funko] === 0;
-      if (isOutOfStock) return total; // No incluir productos agotados
+      if (isOutOfStock) return total;
       const price = getDiscountedPrice(item.funko, item.price);
       const quantity = quantities[item.idCarritoItem] || 1;
       return total + parseFloat(price) * quantity;
@@ -231,14 +257,13 @@ const CartPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map((item, index) => {
+                {cartItems.map((item) => {
                   const isOutOfStock = stock[item.funko] === 0;
 
                   return (
                     <tr key={item.idCarritoItem} style={{ position: "relative" }}>
                       <td colSpan="5" style={{ padding: 0, position: "relative" }}>
                         <div className={`cart-item-row ${isOutOfStock ? "out-of-stock-container" : ""}`}>
-                          {/* Overlay si no hay stock */}
                           {isOutOfStock && (
                             <div className="out-of-stock-overlay">
                               <p>🚫 El producto se ha agotado.<br />Debes eliminarlo del carrito.</p>
@@ -255,7 +280,13 @@ const CartPage = () => {
                           )}
 
                           <div className="cart-item-info">
-                            <img src={item.image} alt={item.name} className="cart-item-image" />
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="cart-item-image"
+                              onClick={() => handleProductClick(item.funko)}
+                              style={{ cursor: "pointer" }}
+                            />
                             <span className="cart-item-name">{item.name}</span>
                           </div>
 
@@ -273,31 +304,21 @@ const CartPage = () => {
                           <div className="cart-item-quantity">
                             {!isOutOfStock ? (
                               <div className="cart-quantity-control">
-                                <button
-                                  className="cart-quantity-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateQuantity(item.idCarritoItem, -1, item.funko);
-                                  }}
-                                  disabled={quantities[item.idCarritoItem] === 1}
-                                >
-                                  -
-                                </button>
-                                <input
-                                  type="text"
-                                  className="cart-quantity-input"
+                                <select
+                                  className="cart-quantity-select"
                                   value={quantities[item.idCarritoItem] || 1}
-                                  readOnly
-                                />
-                                <button
-                                  className="cart-quantity-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateQuantity(item.idCarritoItem, 1, item.funko);
+                                  onChange={(e) => {
+                                    const newQuantity = parseInt(e.target.value);
+                                    updateQuantity(item.idCarritoItem, newQuantity - (quantities[item.idCarritoItem] || 1), item.funko);
                                   }}
+                                  disabled={updatingItemIds.includes(item.idCarritoItem)}
                                 >
-                                  +
-                                </button>
+                                  {Array.from({ length: Math.min(stock[item.funko] || 1, 10) }, (_, i) => i + 1).map((qty) => (
+                                    <option key={qty} value={qty}>
+                                      {qty}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                             ) : (
                               <span style={{ color: "#999", fontWeight: "bold" }}>No disponible</span>
