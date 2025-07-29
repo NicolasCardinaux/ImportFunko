@@ -353,100 +353,119 @@ const CheckoutPage = () => {
       setIsCalculating(false);
     }
   };
+  //NEW
+const [isProcessing, setIsProcessing] = useState(false);
+const [lastFormData, setLastFormData] = useState(null); // Para comparar cambios en el formulario
 
+const confirmarCompra = async () => {
+  if (!isMpScriptLoaded || isProcessing) {
+    setFormError("El método de pago aún está cargando o la compra está en proceso.");
+    return;
+  }
+  if (!validarFormulario()) return;
+  if (shipping.domicilio === null) {
+    setFormError("Por favor, primero calcule el costo de envío.");
+    return;
+  }
 
-  const confirmarCompra = async () => {
-    if (!isMpScriptLoaded) {
-      setFormError("El método de pago aún está cargando. Por favor, espere un momento.");
-      return;
-    }
-    if (!validarFormulario()) return;
-    if (shipping.domicilio === null) {
-      setFormError("Por favor, primero calcule el costo de envío.");
-      return;
-    }
+  setIsProcessing(true);
+  const costoDeEnvio = shipping.seleccion === "domicilio" ? shipping.domicilio : shipping.sucursal;
 
-    // Se declara la variable para el costo de envío
-    const costoDeEnvio = shipping.seleccion === "domicilio" ? shipping.domicilio : shipping.sucursal;
+  try {
+    // Limpiar el contenedor del widget antes de crear uno nuevo
+    document.getElementById("wallet_container").innerHTML = "";
 
-    try {
-      const addressResponse = await fetch("https://practica-django-fxpz.onrender.com/crear-direccion", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${user?.token}`,
-        },
-        body: JSON.stringify({
-          provincia: form.provincia,
-          ciudad: form.ciudad,
-          calle: form.calle,
-          numero: form.numero,
-          piso: form.piso || null,
-          depto: form.depto || null,
-          codigo_postal: form.codigoPostal,
-          contacto: form.telefono,
-          email: form.email,
-        }),
-      });
+    const addressResponse = await fetch("https://practica-django-fxpz.onrender.com/crear-direccion", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${user?.token}`,
+      },
+      body: JSON.stringify({
+        provincia: form.provincia,
+        ciudad: form.ciudad,
+        calle: form.calle,
+        numero: form.numero,
+        piso: form.piso || null,
+        depto: form.depto || null,
+        codigo_postal: form.codigoPostal,
+        contacto: form.telefono,
+        email: form.email,
+      }),
+    });
 
-      if (!addressResponse.ok) {
-        throw new Error("Error al guardar la dirección.");
-      }
-      
-      const idireccionData = await addressResponse.json();
-      const direccion_id = idireccionData.id_direccion;
+    if (!addressResponse.ok) {
+      throw new Error("Error al guardar la dirección.");
+    }
 
-      const preferenceResponse = await fetch('https://practica-django-fxpz.onrender.com/create-preference-from-cart/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Token ${user?.token}`,
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          direccion_id: direccion_id,
-          envio: costoDeEnvio, 
-        }),
-      });
+    const idireccionData = await addressResponse.json();
+    const direccion_id = idireccionData.id_direccion;
 
-      const responseText = await preferenceResponse.text();
+    const preferenceResponse = await fetch('https://practica-django-fxpz.onrender.com/create-preference-from-cart/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${user?.token}`,
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        direccion_id: direccion_id,
+        envio: costoDeEnvio,
+      }),
+    });
 
-      if (!preferenceResponse.ok) {
-        console.error("Error al crear la preferencia de pago:", responseText);
-        throw new Error("Error al crear la preferencia de pago.");
-      }
+    const responseText = await preferenceResponse.text();
+    if (!preferenceResponse.ok) {
+      console.error("Error al crear la preferencia de pago:", responseText);
+      throw new Error("Error al crear la preferencia de pago.");
+    }
 
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (jsonErr) {
-        console.error("La respuesta no es JSON válido:", responseText);
-        throw new Error("Respuesta inválida del servidor.");
-      }
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (jsonErr) {
+      console.error("La respuesta no es JSON válido:", responseText);
+      throw new Error("Respuesta inválida del servidor.");
+    }
 
-      const preferenceId = data.preference_id;
-      
-      const mp = new window.MercadoPago('APP_USR-629234dd-ead6-4264-af26-77253aa46c39');
-      mp.bricks().create("wallet", "wallet_container", {
-        initialization: {
-          preferenceId: preferenceId,
-        },
-        customization: {
-          texts: {
-            valueProp: 'smart_option',
-          },
-        },
-      }).catch(error => {
-        console.error("Error al cargar el widget de Wallet:", error);
-        setFormError("No se pudo cargar el widget de pago.");
-      });
-    } catch (err) {
-      console.error(err);
-      setFormError(err.message || "Ocurrió un error durante el proceso de compra.");
-    }
-  };
+    const preferenceId = data.preference_id;
+    const mp = new window.MercadoPago('APP_USR-629234dd-ead6-4264-af26-77253aa46c39');
+    mp.bricks().create("wallet", "wallet_container", {
+      initialization: {
+        preferenceId: preferenceId,
+      },
+      customization: {
+        texts: {
+          valueProp: 'smart_option',
+        },
+      },
+    }).catch(error => {
+      console.error("Error al cargar el widget de Wallet:", error);
+      setFormError("No se pudo cargar el widget de pago.");
+    });
 
+    // Guardar el estado actual del formulario como referencia para detectar cambios
+    setLastFormData({ ...form, shipping: { ...shipping } });
+  } catch (err) {
+    console.error(err);
+    setFormError(err.message || "Ocurrió un error durante el proceso de compra.");
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
+// Detectar cambios en el formulario
+useEffect(() => {
+  if (lastFormData) {
+    const hasChanged = Object.keys(form).some(key => form[key] !== lastFormData[key]) ||
+      shipping.seleccion !== lastFormData.shipping.seleccion ||
+      shipping.domicilio !== lastFormData.shipping.domicilio ||
+      shipping.sucursal !== lastFormData.shipping.sucursal;
+    // No necesitas hacer nada aquí más allá de detectar el cambio; el botón se habilitará si isProcessing es false
+  }
+}, [form, shipping, lastFormData]);
+
+//NEW
   const envioSeleccionado = shipping.seleccion === "domicilio" ? shipping.domicilio : shipping.sucursal;
   const totalFinal = (subtotal || 0) + (envioSeleccionado || 0);
 
@@ -583,15 +602,16 @@ const CheckoutPage = () => {
         <label className="mercado-pago-label">
           <input type="radio" checked readOnly /> Pago con Mercado Pago
         </label>
-
-        <button
-          onClick={confirmarCompra}
-          className="confirm-purchase-button"
-          disabled={!isMpScriptLoaded || isCartLoading || subtotal === null}
-        >
-          {isMpScriptLoaded ? 'Proceder con la compra' : 'Cargando pago...'}
-        </button>
-        <div id="wallet_container"></div>
+          {/*NEW*/}
+          <button
+            onClick={confirmarCompra}
+            className="confirm-purchase-button"
+            disabled={!isMpScriptLoaded || isCartLoading || subtotal === null || isProcessing}
+          >
+            {isProcessing ? 'Procesando...' : isMpScriptLoaded ? 'Proceder con la compra' : 'Cargando pago...'}
+          </button>
+          <div id="wallet_container"></div>
+          {/*NEW*/}
       </div>
     </div>
   );
