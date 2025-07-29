@@ -97,7 +97,6 @@ const AccountPage = () => {
 
   const enableEditing = (field) => {
     if (error === "oauth_account") {
-      alert("No puedes editar datos de una cuenta creada con Google, X o GitHub.");
       return;
     }
     setIsEditing((prev) => ({ ...prev, [field]: true }));
@@ -115,7 +114,6 @@ const AccountPage = () => {
     }
 
     if (error === "oauth_account") {
-      alert("No puedes actualizar datos de una cuenta creada con Google, X o GitHub.");
       return;
     }
 
@@ -150,7 +148,6 @@ const AccountPage = () => {
         password: "",
       }));
       setIsEditing({ nombre: false, email: false, contacto: false, password: false });
-      alert("Datos actualizados correctamente!");
     } catch (err) {
       setError(`No se pudieron actualizar los datos. Por favor, intenta de nuevo o contacta al soporte. Detalle: ${err.message}`);
     }
@@ -193,7 +190,6 @@ const AccountPage = () => {
       logout(); 
       closeDeleteModal();
       navigate("/"); 
-      alert("Cuenta eliminada correctamente.");
     } catch (err) {
       setError(`No se pudo eliminar la cuenta. Detalle: ${err.message}`);
       closeDeleteModal();

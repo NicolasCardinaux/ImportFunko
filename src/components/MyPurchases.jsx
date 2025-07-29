@@ -135,12 +135,10 @@ const MyPurchases = () => {
     const userId = user?.userId || localStorage.getItem("userId");
 
     if (!token || !userId || !funkoId || !newReview[funkoId]?.estrellas || !newReview[funkoId]?.contenido) {
-      alert("Faltan datos para enviar la reseña. Asegúrate de completar todos los campos.");
       return;
     }
 
     if (newReview[funkoId].contenido.length > 300) {
-      alert("La reseña no puede exceder los 300 caracteres.");
       return;
     }
 
@@ -164,7 +162,6 @@ const MyPurchases = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("❌ Error del servidor:", errorText);
-        alert(`Error al enviar la reseña: ${errorText}`);
         return;
       }
 
@@ -172,10 +169,8 @@ const MyPurchases = () => {
       setReviews((prev) => [...prev, newRes]);
       setNewReview((prev) => ({ ...prev, [funkoId]: {} }));
       toggleReviewForm(funkoId);
-      alert("¡Reseña enviada con éxito!");
     } catch (err) {
       console.error("Error al enviar reseña:", err);
-      alert("Ocurrió un error inesperado.");
     }
   };
 
@@ -183,7 +178,6 @@ const MyPurchases = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("No se encontró el token de autenticación. Por favor, inicia sesión nuevamente.");
       navigate("/login");
       return;
     }
@@ -200,15 +194,12 @@ const MyPurchases = () => {
       if (!res.ok) {
         const errorText = await res.text();
         console.error(`❌ Error al eliminar reseña (ID: ${reviewId}): ${res.status} - ${errorText}`);
-        alert(`Error al eliminar la reseña: ${res.status} - ${errorText}`);
         return;
       }
 
-      setReviews((prev) => prev.filter((r) => r.idReseña !== reviewId));
-      alert("Reseña eliminada con éxito.");
+      setReviews((prev) => prev.filter((r) => r.idReseña !== reviewId));;
     } catch (err) {
       console.error("⚠️ Error inesperado al eliminar reseña:", err);
-      alert("Ocurrió un error inesperado al intentar eliminar la reseña.");
     }
   };
 

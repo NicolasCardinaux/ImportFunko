@@ -211,18 +211,15 @@ const ProductDetail = () => {
     if (!token) {
       const currentPath = location.pathname;
       sessionStorage.setItem("redirectAfterLogin", currentPath);
-      alert("Debes iniciar sesión para agregar al carrito.");
       navigate("/login");
       return;
     }
 
     if (!userId) {
-      alert("No se encontró el ID del usuario. Por favor, inicia sesión nuevamente.");
       return;
     }
 
     if (quantity <= 0) {
-      alert("La cantidad debe ser mayor que 0.");
       return;
     }
 
@@ -230,7 +227,6 @@ const ProductDetail = () => {
     const cantidad = parseInt(quantity, 10);
 
     if (isNaN(funkoId)) {
-      alert("El ID del Funko no es válido.");
       return;
     }
 
@@ -259,24 +255,20 @@ const ProductDetail = () => {
 
       const responseData = await response.json();
       console.log("[Cart] Respuesta del servidor (éxito):", responseData);
-      alert("Producto agregado al carrito!");
       navigate("/cart");
     } catch (err) {
       console.error("[Cart] Error al agregar al carrito:", err);
-      alert(`Error al agregar al carrito: ${err.message}`);
     }
   };
 
   const toggleFavorite = async () => {
     if (!token) {
-      alert("Debes iniciar sesión para agregar a favoritos.");
       navigate("/login");
       return;
     }
 
     const funkoId = parseInt(id, 10);
     if (isNaN(funkoId)) {
-      alert("El ID del Funko no es válido.");
       return;
     }
 
@@ -298,7 +290,6 @@ const ProductDetail = () => {
         }
 
         setIsFavorite(false);
-        alert("Funko eliminado de favoritos!");
       } else {
         console.log(`[Favorites] Agregando Funko ${funkoId} a favoritos...`);
         const response = await fetch(`https://practica-django-fxpz.onrender.com/funkos/${funkoId}/favoritos`, {
@@ -316,11 +307,9 @@ const ProductDetail = () => {
         }
 
         setIsFavorite(true);
-        alert("Funko agregado a favoritos!");
       }
     } catch (err) {
       console.error("[Favorites] Error al gestionar favoritos:", err);
-      alert(`Error: ${err.message}`);
     }
   };
 
@@ -421,7 +410,23 @@ const ProductDetail = () => {
               Es Retroiluminado: <span className="checkbox-box">{isRetroiluminado ? "✔" : "✘"}</span>
             </p>
             <hr className="retroiluminado-line" />
-            <p className="product-stock">Stock: {product.stock || 0}</p>
+            {(() => {
+              const frases = [
+                "Brilla en tu colección",
+                "Edición para fanáticos",
+                "Perfecto para exhibir",
+                "Un must coleccionable",
+                "Tu héroe favorito",
+                "Añádelo a tu vitrina",
+                "Colección que inspira",
+                "Exclusivo y especial",
+                "Último disponible",
+                "Un clásico eterno"
+              ];
+              const index = parseInt(id, 10) % frases.length;
+              const fraseFija = frases[index];
+              return <p className="product-frase">{fraseFija}</p>;
+            })()}
             {categoryNames && <p className="product-category">Categoría: {categoryNames}</p>}
             {product.stock === 0 && (
               <div className="out-of-stock-warning">

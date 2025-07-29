@@ -13,13 +13,11 @@ const CartPage = () => {
   const [stock, setStock] = useState({});
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [funkoDiscounts, setFunkoDiscounts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
 
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
-
 
   const getDiscountPercentage = (productId) => {
     const funkoDiscount = funkoDiscounts.find((discount) => discount.funko === productId);
@@ -28,7 +26,6 @@ const CartPage = () => {
     const discountData = discounts.find((discount) => discount.idDescuento === discountId);
     return discountData ? discountData.porcentaje : null;
   };
-
 
   const getDiscountedPrice = (productId, originalPrice) => {
     const discountPercentage = getDiscountPercentage(productId);
@@ -112,7 +109,6 @@ const CartPage = () => {
     }
   };
 
-
   useEffect(() => {
     fetch("https://practica-django-fxpz.onrender.com/funkodescuentos")
       .then((response) => response.json())
@@ -162,14 +158,14 @@ const CartPage = () => {
     }
   };
 
-  const updateQuantity = async (cartItemId, change) => {
+  const updateQuantity = async (cartItemId, change, funkoId) => {
     const currentQuantity = quantities[cartItemId] || 1;
-    const item = cartItems.find(item => item.idCarritoItem === cartItemId);
-    const availableStock = stock[item?.funko] || 0;
+    const availableStock = stock[funkoId] || 0;
     const newQuantity = Math.max(1, Math.min(currentQuantity + change, availableStock));
 
     if (newQuantity === currentQuantity) return;
 
+    // Actualizo en la UI inmediatamente
     setQuantities((prev) => {
       const newQuantities = { ...prev, [cartItemId]: newQuantity };
       localStorage.setItem("cartQuantities", JSON.stringify(newQuantities));
@@ -177,7 +173,7 @@ const CartPage = () => {
     });
 
     try {
-      await fetch(`https://practica-django-fxpz.onrender.com/carritos`, {
+      const res = await fetch("https://practica-django-fxpz.onrender.com/carritos", {
         method: "POST",
         headers: {
           Authorization: `Token ${token}`,
@@ -186,16 +182,21 @@ const CartPage = () => {
         body: JSON.stringify({
           idCarritoItem: cartItemId,
           cantidad: newQuantity,
-          idFunko: item.funko,
+          idFunko: funkoId,
         }),
       });
+
+      if (!res.ok) throw new Error("Error al actualizar");
     } catch (err) {
-      setError(err.message);
+      // Revertir si falla
+      setQuantities((prev) => ({ ...prev, [cartItemId]: currentQuantity }));
     }
   };
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
+      const isOutOfStock = stock[item.funko] === 0;
+      if (isOutOfStock) return total; // No incluir productos agotados
       const price = getDiscountedPrice(item.funko, item.price);
       const quantity = quantities[item.idCarritoItem] || 1;
       return total + parseFloat(price) * quantity;
@@ -205,6 +206,8 @@ const CartPage = () => {
   const handleProductClick = (funkoId) => {
     navigate(`/product/${funkoId}`);
   };
+
+  const hasOutOfStock = cartItems.some(item => stock[item.funko] === 0);
 
   if (loading) return <p className="loading-message">Cargando carrito...</p>;
   if (error) return <p className="error-message">{error}</p>;
@@ -228,67 +231,110 @@ const CartPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map((item, index) => (
-                  <tr key={item.idCarritoItem} style={{ "--index": index, cursor: "pointer" }} onClick={() => handleProductClick(item.funko)}>
-                    <td style={{ textAlign: "center" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                        <img src={item.image} alt={item.name} className="cart-item-image" />
-                        <span className="cart-item-name">{item.name}</span>
-                      </div>
-                    </td>
+                {cartItems.map((item, index) => {
+                  const isOutOfStock = stock[item.funko] === 0;
 
-                    <td>
-                      {getDiscountPercentage(item.funko) ? (
-                        <div style={{ display: "flex", flexDirection: "column" }}>
-                          <span style={{ textDecoration: "line-through", color: "#666" }}>
-                            ${item.price.toFixed(2)}
-                          </span>
-                          <span style={{ color: "#D32F2F", fontWeight: "bold" }}>
-                            ${getDiscountedPrice(item.funko, item.price)}
-                          </span>
+                  return (
+                    <tr key={item.idCarritoItem} style={{ position: "relative" }}>
+                      <td colSpan="5" style={{ padding: 0, position: "relative" }}>
+                        <div className={`cart-item-row ${isOutOfStock ? "out-of-stock-container" : ""}`}>
+                          {/* Overlay si no hay stock */}
+                          {isOutOfStock && (
+                            <div className="out-of-stock-overlay">
+                              <p>🚫 El producto se ha agotado.<br />Debes eliminarlo del carrito.</p>
+                              <button
+                                className="cart-remove-button overlay-remove-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeFromCart(item.idCarritoItem);
+                                }}
+                              >
+                                <img src={trashIcon} alt="Eliminar" className="cart-trash-icon" />
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="cart-item-info">
+                            <img src={item.image} alt={item.name} className="cart-item-image" />
+                            <span className="cart-item-name">{item.name}</span>
+                          </div>
+
+                          <div className="cart-item-price">
+                            {getDiscountPercentage(item.funko) ? (
+                              <div className="price-stack">
+                                <span className="original-price">${item.price.toFixed(2)}</span>
+                                <span className="discounted-price">${getDiscountedPrice(item.funko, item.price)}</span>
+                              </div>
+                            ) : (
+                              <span className="regular-price">${item.price.toFixed(2)}</span>
+                            )}
+                          </div>
+
+                          <div className="cart-item-quantity">
+                            {!isOutOfStock ? (
+                              <div className="cart-quantity-control">
+                                <button
+                                  className="cart-quantity-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateQuantity(item.idCarritoItem, -1, item.funko);
+                                  }}
+                                  disabled={quantities[item.idCarritoItem] === 1}
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="text"
+                                  className="cart-quantity-input"
+                                  value={quantities[item.idCarritoItem] || 1}
+                                  readOnly
+                                />
+                                <button
+                                  className="cart-quantity-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateQuantity(item.idCarritoItem, 1, item.funko);
+                                  }}
+                                >
+                                  +
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{ color: "#999", fontWeight: "bold" }}>No disponible</span>
+                            )}
+                          </div>
+
+                          <div className="cart-item-subtotal">
+                            {!isOutOfStock ? (
+                              <>
+                                ${(
+                                  getDiscountedPrice(item.funko, item.price) *
+                                  (quantities[item.idCarritoItem] || 1)
+                                ).toFixed(2)}
+                              </>
+                            ) : (
+                              <>$0.00</>
+                            )}
+                          </div>
+
+                          {!isOutOfStock && (
+                            <div className="cart-item-action">
+                              <button
+                                className="cart-remove-button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeFromCart(item.idCarritoItem);
+                                }}
+                              >
+                                <img src={trashIcon} alt="Eliminar" className="cart-trash-icon" />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <>${item.price.toFixed(2)}</>
-                      )}
-                    </td>
-
-                    <td>
-                      <div className="cart-quantity-control">
-                        <button
-                          className="cart-quantity-btn"
-                          onClick={(e) => { e.stopPropagation(); updateQuantity(item.idCarritoItem, -1); }}
-                          disabled={quantities[item.idCarritoItem] === 1}
-                        >-</button>
-                        <input
-                          type="text"
-                          className="cart-quantity-input"
-                          value={quantities[item.idCarritoItem] || 1}
-                          readOnly
-                        />
-                        <button
-                          className="cart-quantity-btn"
-                          onClick={(e) => { e.stopPropagation(); updateQuantity(item.idCarritoItem, 1); }}
-                        >+</button>
-                      </div>
-                    </td>
-
-                    <td>
-                      ${(
-                        getDiscountedPrice(item.funko, item.price) *
-                        (quantities[item.idCarritoItem] || 1)
-                      ).toFixed(2)}
-                    </td>
-
-                    <td>
-                      <button
-                        className="cart-remove-button"
-                        onClick={(e) => { e.stopPropagation(); removeFromCart(item.idCarritoItem); }}
-                      >
-                        <img src={trashIcon} alt="Eliminar" className="cart-trash-icon" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -296,9 +342,19 @@ const CartPage = () => {
             <h3>Resumen de Compra</h3>
             <p>Subtotal: ${calculateTotal().toFixed(2)}</p>
             <p className="total-price">Total: ${calculateTotal().toFixed(2)}</p>
-            <button className="cart-checkout-button" onClick={() => navigate("/checkout")}>
+            <button
+              className="cart-checkout-button"
+              onClick={() => navigate("/checkout")}
+              disabled={hasOutOfStock}
+              title={hasOutOfStock ? "No puedes comprar productos sin stock" : ""}
+            >
               Realizar Compra
             </button>
+            {hasOutOfStock && (
+              <p className="cart-out-of-stock-message">
+                No puedes realizar la compra mientras haya productos sin stock.
+              </p>
+            )}
           </div>
         </div>
       )}

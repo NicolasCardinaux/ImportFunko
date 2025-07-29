@@ -84,7 +84,6 @@ const Login = () => {
         } else {
           throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
         }
-        alert("Inicio de sesión exitoso.");
         const userData = {
           token: data.Token || data.token,
           userId,
@@ -132,7 +131,6 @@ const Login = () => {
             console.error("Estructura de respuesta inesperada:", data);
             throw new Error("No se pudo obtener el ID del usuario de la respuesta.");
           }
-          alert("Inicio de sesión exitoso con Google.");
           const userData = {
             token: data.token,
             userId,

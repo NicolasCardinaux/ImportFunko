@@ -2079,6 +2079,22 @@ body.dark-mode .star.partial {
   transition: color 0.5s ease;
 }
 
+.product-frase {
+  font-size: 18px;
+  color: #5500ff; 
+  font-weight: 600;
+  margin-top: 12px;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  align-self: flex-start;
+  transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+
+body.dark-mode .product-frase {
+  color: #E0B84A; 
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
+}
+
+
 body.dark-mode .retroiluminado {
   color: #EAEAEA;
 }
@@ -3805,6 +3821,79 @@ body.dark-mode .cart-remove-button:hover {
   height: auto;
 }
 
+
+.cart-item-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 0.5fr;
+  align-items: center;
+  padding: 10px;
+  position: relative;
+}
+
+
+.out-of-stock-container {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+
+.out-of-stock-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.92);
+  color: #ff0000; 
+  font-weight: bold;
+  font-size: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 5;
+  border: 2px solid #ff0000; 
+  border-radius: 8px;
+  padding: 15px;
+}
+
+
+.overlay-remove-btn {
+  background: transparent;
+  border: none;
+  margin-top: 10px;
+  cursor: pointer;
+  z-index: 10;
+  pointer-events: all;
+}
+
+.overlay-remove-btn img {
+  width: 50px; 
+  height: 50px;
+  filter: drop-shadow(0 0 2px #ff0000) brightness(1.5); 
+  transition: transform 0.2s;
+}
+
+.overlay-remove-btn img:hover {
+  transform: scale(1.15); 
+  cursor: pointer;
+}
+
+.cart-out-of-stock-message {
+  color: red !important;
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+
+.cart-table .regular-price {
+  font-size: 1.6rem;
+  color: #ffffff;
+  display: block;
+  font-weight: bold;
+}
+
+
+
 body.dark-mode .cart-summary {
   background-color: #1A1A1A;
   box-shadow: 0 2px 4px rgba(255, 0, 0, 0.2);
@@ -3936,6 +4025,8 @@ body.dark-mode .cart-table .original-price {
 body.dark-mode .cart-table .discounted-price {
   color: #D32F2F;
 }
+
+
 
 /* CARRITO Mobile */
 @media (max-width: 768px) {

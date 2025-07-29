@@ -93,7 +93,6 @@ const FavoritesPage = () => {
       }
 
       setFavorites(favorites.filter((item) => item.idFunko !== funkoId));
-      alert("Funko eliminado de favoritos!");
     } catch (err) {
       setError(err.message);
     }
@@ -101,13 +100,11 @@ const FavoritesPage = () => {
 
   const handleAddToCart = async (funkoId) => {
     if (!token) {
-      alert("Debes iniciar sesión para agregar al carrito.");
       navigate("/login");
       return;
     }
 
     if (!userId) {
-      alert("No se encontró el ID del usuario. Por favor, inicia sesión nuevamente.");
       return;
     }
 
@@ -131,9 +128,7 @@ const FavoritesPage = () => {
         throw new Error(`Error ${response.status}: ${text}`);
       }
 
-      alert("Producto agregado al carrito!");
     } catch (err) {
-      alert(`Error al agregar al carrito: ${err.message}`);
     }
   };
 

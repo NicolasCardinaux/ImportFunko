@@ -137,7 +137,6 @@ const Register = () => {
 
       if (response.status === 201) {
         const responseData = await response.json();
-        alert(responseData.mensaje || "Usuario registrado correctamente. Por favor, inicia sesión.");
         navigate("/login");
       } else if (response.status === 409) {
         const errorData = await response.json();
@@ -199,7 +198,6 @@ const Register = () => {
       .then((data) => {
         console.log("Respuesta completa de Google register:", JSON.stringify(data, null, 2));
         if (data.success) {
-          alert("Registro exitoso con Google. Por favor, inicia sesión.");
           navigate("/login");
         } else {
           const errorMsg = data.error || "Error desconocido";
