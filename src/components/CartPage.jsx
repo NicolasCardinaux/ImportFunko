@@ -98,7 +98,7 @@ const CartPage = () => {
       setCartItems(itemsWithDetails);
 
       const initialQuantities = itemsWithDetails.reduce((acc, item) => {
-        acc[item.idCarritoItem] = quantities[item.idCarritoItem] || item.cantidad;
+        acc[item.idCarritoItem] = item.cantidad;
         return acc;
       }, {});
       setQuantities(initialQuantities);
@@ -169,7 +169,6 @@ const CartPage = () => {
     setUpdatingItemIds((prev) => [...prev, cartItemId]);
 
     try {
-      // Paso 1: Eliminar el ítem existente
       const deleteResponse = await fetch("https://practica-django-fxpz.onrender.com/carritos", {
         method: "DELETE",
         headers: {
@@ -184,7 +183,6 @@ const CartPage = () => {
         throw new Error(`Error al eliminar el ítem: ${deleteResponse.status} - ${text}`);
       }
 
-      // Paso 2: Agregar el ítem con la nueva cantidad
       const postResponse = await fetch("https://practica-django-fxpz.onrender.com/carritos", {
         method: "POST",
         headers: {
@@ -202,14 +200,12 @@ const CartPage = () => {
         throw new Error(`Error al actualizar la cantidad: ${postResponse.status} - ${text}`);
       }
 
-      // Actualizar el estado local
       setQuantities((prev) => {
         const newQuantities = { ...prev, [cartItemId]: newQuantity };
         localStorage.setItem("cartQuantities", JSON.stringify(newQuantities));
         return newQuantities;
       });
 
-      // Refrescar los ítems del carrito
       await fetchCartItemsAndStock();
     } catch (err) {
       setError(err.message);
@@ -267,15 +263,6 @@ const CartPage = () => {
                           {isOutOfStock && (
                             <div className="out-of-stock-overlay">
                               <p>🚫 El producto se ha agotado.<br />Debes eliminarlo del carrito.</p>
-                              <button
-                                className="cart-remove-button overlay-remove-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeFromCart(item.idCarritoItem);
-                                }}
-                              >
-                                <img src={trashIcon} alt="Eliminar" className="cart-trash-icon" />
-                              </button>
                             </div>
                           )}
 
@@ -338,19 +325,17 @@ const CartPage = () => {
                             )}
                           </div>
 
-                          {!isOutOfStock && (
-                            <div className="cart-item-action">
-                              <button
-                                className="cart-remove-button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeFromCart(item.idCarritoItem);
-                                }}
-                              >
-                                <img src={trashIcon} alt="Eliminar" className="cart-trash-icon" />
-                              </button>
-                            </div>
-                          )}
+                          <div className={`cart-item-action ${isOutOfStock ? 'overlay-position' : ''}`}>
+                            <button
+                              className={`cart-remove-button ${isOutOfStock ? 'overlay-remove-btn' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromCart(item.idCarritoItem);
+                              }}
+                            >
+                              <img src={trashIcon} alt="Eliminar" className="cart-trash-icon" />
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>

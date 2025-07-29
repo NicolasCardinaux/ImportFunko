@@ -5,6 +5,7 @@ import redCircle from "../assets/red-circle-free-png.png";
 
 const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
+  const [funkoDetails, setFunkoDetails] = useState({});
   const [funkoDiscounts, setFunkoDiscounts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,20 @@ const FavoritesPage = () => {
 
         const data = await response.json();
         setFavorites(data.funkos || []);
+
+        // Obtener detalles de los funkos incluyendo stock
+        const funkosResponse = await fetch("https://practica-django-fxpz.onrender.com/funkos", {
+          headers: { Authorization: `Token ${token}` },
+        });
+        if (!funkosResponse.ok) {
+          throw new Error("Error al obtener detalles de los funkos");
+        }
+        const funkosData = await funkosResponse.json();
+        const detailsMap = funkosData.funkos.reduce((acc, funko) => {
+          acc[funko.idFunko] = funko;
+          return acc;
+        }, {});
+        setFunkoDetails(detailsMap);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -127,7 +142,6 @@ const FavoritesPage = () => {
         const text = await response.text();
         throw new Error(`Error ${response.status}: ${text}`);
       }
-
     } catch (err) {
     }
   };
@@ -160,8 +174,13 @@ const FavoritesPage = () => {
       <h2 className="favorites-title">Tus Funkos Favoritos</h2>
       <div className="favorites-grid">
         {favorites.map((item, index) => {
+          const funkoDetail = funkoDetails[item.idFunko];
+          if (!funkoDetail) return null; // Espera a que los detalles estén disponibles
+
           const discountPercentage = getDiscountPercentage(item.idFunko);
           const discountedPrice = getDiscountedPrice(item.idFunko, item.precio);
+          const isOutOfStock = funkoDetail.stock === 0;
+
           return (
             <div key={item.idFunko} className="favorite-item" style={{ '--index': index }}>
               {discountPercentage && (
@@ -172,19 +191,30 @@ const FavoritesPage = () => {
                   -{discountPercentage}%
                 </div>
               )}
+
+              {isOutOfStock && (
+                <div className="favorite-out-of-stock-overlay">
+                  <p className="out-of-stock-text">Producto agotado</p>
+                </div>
+              )}
+
               <img
                 src={item.imagen?.url || "https://via.placeholder.com/150"}
                 alt={item.nombre}
                 className="favorite-item-image"
                 onError={(e) => (e.target.src = "https://via.placeholder.com/150")}
-                onClick={() => handleFunkoClick(item.idFunko)}
-                style={{ cursor: "pointer" }}
+                onClick={() => {
+                  if (!isOutOfStock) handleFunkoClick(item.idFunko);
+                }}
+                style={{ cursor: isOutOfStock ? "default" : "pointer" }}
               />
               <div className="favorite-item-info">
                 <h3
                   className="favorite-item-name"
-                  onClick={() => handleFunkoClick(item.idFunko)}
-                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    if (!isOutOfStock) handleFunkoClick(item.idFunko);
+                  }}
+                  style={{ cursor: isOutOfStock ? "default" : "pointer" }}
                 >
                   {item.nombre || "Nombre producto"}
                 </h3>
@@ -199,12 +229,14 @@ const FavoritesPage = () => {
                   )}
                 </div>
                 <div className="favorite-item-actions">
-                  <button
-                    className="favorite-add-to-cart-button"
-                    onClick={() => handleAddToCart(item.idFunko)}
-                  >
-                    Agregar al carrito
-                  </button>
+                  {!isOutOfStock && (
+                    <button
+                      className="favorite-add-to-cart-button"
+                      onClick={() => handleAddToCart(item.idFunko)}
+                    >
+                      Agregar al carrito
+                    </button>
+                  )}
                   <button
                     className="favorite-remove-button"
                     onClick={() => removeFromFavorites(item.idFunko)}

@@ -19,6 +19,7 @@ const ProductDetail = () => {
   const [funkoDiscounts, setFunkoDiscounts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [discountedPrice, setDiscountedPrice] = useState(null);
+  const [cartLimitReached, setCartLimitReached] = useState(false);
 
   const reviewsSectionRef = useRef(null);
 
@@ -133,6 +134,7 @@ const ProductDetail = () => {
     }
   }, [product, funkoDiscounts, discounts, id]);
 
+  // Verificar si el producto está en favoritos
   useEffect(() => {
     const checkIfFavorite = async () => {
       if (!token) return;
@@ -207,6 +209,27 @@ const ProductDetail = () => {
     fetchReviews();
   }, [id]);
 
+  // Verificar si el producto ya está en el carrito con el stock máximo
+  const checkCartLimit = async (funkoId) => {
+    try {
+      const response = await fetch(`https://practica-django-fxpz.onrender.com/usuarios/${userId}/carrito/`, {
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) return false;
+
+      const data = await response.json();
+      const item = data.items?.find(i => i.funko === funkoId);
+      return item?.cantidad >= product.stock;
+    } catch (error) {
+      console.error("Error verificando cantidad en carrito:", error);
+      return false;
+    }
+  };
+
   const handleAddToCart = async () => {
     if (!token) {
       const currentPath = location.pathname;
@@ -215,11 +238,7 @@ const ProductDetail = () => {
       return;
     }
 
-    if (!userId) {
-      return;
-    }
-
-    if (quantity <= 0) {
+    if (!userId || quantity <= 0) {
       return;
     }
 
@@ -231,6 +250,14 @@ const ProductDetail = () => {
     }
 
     try {
+      // Verificar si se alcanzó el límite de stock en el carrito
+      const limitReached = await checkCartLimit(funkoId);
+      if (limitReached) {
+        setCartLimitReached(true);
+        return;
+      }
+      setCartLimitReached(false);
+
       console.log("[Cart] Haciendo solicitud a: https://practica-django-fxpz.onrender.com/carritos");
       const payload = {
         idFunko: funkoId,
@@ -465,6 +492,11 @@ const ProductDetail = () => {
                 {product.stock === 0 ? "Sin stock" : "Agregar al carrito"}
               </button>
             </div>
+            {cartLimitReached && (
+              <p className="cart-limit-message" style={{ color: "red", marginTop: "8px" }}>
+                ❗ Cantidad máxima en el carrito alcanzada.
+              </p>
+            )}
             <div
               className={`favorite-icon ${isFavorite ? "filled" : ""}`}
               onClick={product.stock === 0 ? null : toggleFavorite}
