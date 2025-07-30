@@ -4262,12 +4262,16 @@ body.dark-mode .custom-option:hover {
     width: 100%;
   }
 
-  .cart-table .price,
-  .cart-table .regular-price {
-    font-size: 0.6rem;
-    padding: 0.4rem 1rem;
-    margin-left: -4px;
-  }
+ .cart-table .price,
+ .cart-table .regular-price {
+   font-size: 0.6rem;
+   padding: 0.4rem 1rem;
+   margin-left: -4px;
+   white-space: nowrap;
+   display: inline-block; 
+   vertical-align: middle; 
+ }
+
 
   .cart-item-subtotal {
     margin-left: -25px; 
