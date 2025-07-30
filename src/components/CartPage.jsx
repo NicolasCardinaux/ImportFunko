@@ -1,7 +1,58 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import trashIcon from "../assets/contenedor-de-basura.png";
 import "../index.css";
+
+
+const InlineCustomSelect = ({ options, value, onChange, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [wrapperRef]);
+
+  const handleOptionClick = (optionValue) => {
+    onChange(optionValue);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="custom-select-wrapper" ref={wrapperRef}>
+      <div 
+        className={`custom-select-trigger ${disabled ? 'disabled' : ''}`} 
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <span>{value}</span>
+        <span className="custom-arrow">&#9662;</span>
+      </div>
+      {isOpen && (
+        <div className="custom-options">
+          {options.map((option) => (
+            <div
+              key={option}
+              className="custom-option"
+              onClick={() => handleOptionClick(option)}
+            >
+              {option}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -291,21 +342,16 @@ const CartPage = () => {
                           <div className="cart-item-quantity">
                             {!isOutOfStock ? (
                               <div className="cart-quantity-control">
-                                <select
-                                  className="cart-quantity-select"
+                                {}
+                                <InlineCustomSelect
+                                  options={Array.from({ length: stock[item.funko] || 1 }, (_, i) => i + 1)}
                                   value={quantities[item.idCarritoItem] || 1}
-                                  onChange={(e) => {
-                                    const newQuantity = parseInt(e.target.value);
-                                    updateQuantity(item.idCarritoItem, newQuantity - (quantities[item.idCarritoItem] || 1), item.funko);
+                                  onChange={(newQuantity) => {
+                                      updateQuantity(item.idCarritoItem, newQuantity - (quantities[item.idCarritoItem] || 1), item.funko);
                                   }}
                                   disabled={updatingItemIds.includes(item.idCarritoItem)}
-                                >
-                                  {Array.from({ length: Math.min(stock[item.funko] || 1, 10) }, (_, i) => i + 1).map((qty) => (
-                                    <option key={qty} value={qty}>
-                                      {qty}
-                                    </option>
-                                  ))}
-                                </select>
+                                />
+                                {}
                               </div>
                             ) : (
                               <span style={{ color: "#999", fontWeight: "bold" }}>No disponible</span>

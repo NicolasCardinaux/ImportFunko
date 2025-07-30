@@ -219,14 +219,16 @@ const ProductDetail = () => {
         },
       });
 
-      if (!response.ok) return false;
+      if (!response.ok) return { limitReached: false, cantidadEnCarrito: 0 };
 
       const data = await response.json();
-      const item = data.items?.find(i => i.funko === funkoId);
-      return item?.cantidad >= product.stock;
+      const item = data.items?.find((i) => i.funko === funkoId);
+      const cantidadEnCarrito = item?.cantidad || 0;
+      const limitReached = cantidadEnCarrito >= product.stock;
+      return { limitReached, cantidadEnCarrito };
     } catch (error) {
       console.error("Error verificando cantidad en carrito:", error);
-      return false;
+      return { limitReached: false, cantidadEnCarrito: 0 };
     }
   };
 
@@ -250,20 +252,22 @@ const ProductDetail = () => {
     }
 
     try {
-      // Verificar si se alcanzó el límite de stock en el carrito
-      const limitReached = await checkCartLimit(funkoId);
-      if (limitReached) {
+      const { limitReached, cantidadEnCarrito } = await checkCartLimit(funkoId);
+
+      if (cantidad + cantidadEnCarrito > product.stock) {
         setCartLimitReached(true);
         return;
       }
+
       setCartLimitReached(false);
 
-      console.log("[Cart] Haciendo solicitud a: https://practica-django-fxpz.onrender.com/carritos");
       const payload = {
         idFunko: funkoId,
         cantidad: cantidad,
         userId: parseInt(userId, 10),
       };
+
+      console.log("[Cart] Haciendo solicitud a: https://practica-django-fxpz.onrender.com/carritos");
       console.log("[Cart] Datos enviados al servidor:", payload);
       const response = await fetch("https://practica-django-fxpz.onrender.com/carritos", {
         method: "POST",
@@ -494,7 +498,7 @@ const ProductDetail = () => {
             </div>
             {cartLimitReached && (
               <p className="cart-limit-message" style={{ color: "red", marginTop: "8px" }}>
-                ❗ Cantidad máxima en el carrito alcanzada.
+                ❗ No se puede agregar esa cantidad. Ya tienes el máximo en el carrito o estás superando el stock disponible.
               </p>
             )}
             <div
