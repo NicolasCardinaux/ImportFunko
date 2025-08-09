@@ -8,7 +8,7 @@ const ORIGIN_LON = -58.2329;
 const PRICE_PER_KM = 10;
 
 
-const OPENCAGE_API_KEY = "0e8b6f4f65b645d789c4c88377bf1494";
+const OPENCAGE_API_KEY = import.meta.env.VITE_OPENCAGE_API_KEY;
 
 const ShippingCalculator = ({ quantity }) => {
   const [postalCode, setPostalCode] = useState("");

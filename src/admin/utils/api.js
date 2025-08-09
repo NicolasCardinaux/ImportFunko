@@ -1,5 +1,5 @@
-const BASE_URL = "https://practica-django-fxpz.onrender.com";
-const API_TOKEN = "221a72f73c7aee1c4d00ea16ad712347a53260f1";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
 
 export const crearFunko = async (funkoData) => {
